@@ -56,6 +56,7 @@ fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     if (std.mem.startsWith(u8, target, "/api/move")) return handleTransfer(io, gpa, req, target, .move);
     if (std.mem.startsWith(u8, target, "/api/copy")) return handleTransfer(io, gpa, req, target, .copy);
     if (std.mem.startsWith(u8, target, "/api/delete")) return handleDelete(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/mkdir")) return handleMkdir(io, gpa, req, target);
 
     try req.respond(index_html, .{
         .extra_headers = &.{.{ .name = "content-type", .value = "text/html; charset=utf-8" }},
@@ -198,6 +199,25 @@ fn doDelete(io: Io, path: []const u8) !void {
     } else {
         try Io.Dir.deleteFileAbsolute(io, path);
     }
+}
+
+// ───────────────────────── 新建文件夹 ─────────────────────────
+
+fn handleMkdir(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const path = try percentDecode(arena, queryParam(target, "path") orelse "");
+
+    doMkdir(io, path) catch |err| return respondErr(req, arena, err);
+    try respondOk(req);
+}
+
+fn doMkdir(io: Io, path: []const u8) !void {
+    if (path.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
+    try Io.Dir.createDirAbsolute(io, path, .default_dir);
 }
 
 // ───────────────────────── 通用响应 ─────────────────────────

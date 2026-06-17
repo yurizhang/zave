@@ -10,10 +10,11 @@
   body { margin:0; font-family:-apple-system,"PingFang SC",system-ui,sans-serif; background:var(--bg); color:var(--fg); }
   header { position:sticky; top:0; background:var(--panel); padding:10px 14px; border-bottom:1px solid #00000040; }
   .pathbar { display:flex; gap:8px; align-items:center; }
-  .pathbar input {
-    flex:1; background:var(--bg); color:var(--fg); border:1px solid #45475a;
+  input[type=text], input:not([type]) {
+    background:var(--bg); color:var(--fg); border:1px solid #45475a;
     border-radius:6px; padding:8px 10px; font-family:ui-monospace,Menlo,monospace; font-size:13px;
   }
+  .pathbar input { flex:1; }
   button {
     background:var(--accent); color:#11111b; border:none; border-radius:6px;
     padding:8px 12px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
@@ -26,8 +27,13 @@
   .crumbs a { color:var(--accent); text-decoration:none; cursor:pointer; }
   .crumbs a:hover { text-decoration:underline; }
   .toolbar { margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .sep { width:1px; height:20px; background:#45475a; margin:0 4px; }
   .clip { font-size:12px; color:var(--muted); margin-left:6px; word-break:break-all; }
   .clip b { color:var(--accent); }
+  .filterbar { margin-top:8px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .filterbar input { flex:1; min-width:160px; }
+  .toggle { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); cursor:pointer; user-select:none; }
+  .toggle input { width:16px; height:16px; accent-color:var(--accent); }
   ul { list-style:none; margin:0; padding:0; }
   li {
     display:flex; align-items:center; gap:10px; padding:8px 14px;
@@ -36,6 +42,7 @@
   li:hover { background:var(--hover); }
   li.selected { background:var(--sel); }
   li.cut { opacity:.5; }
+  li.hidden-file .name { color:var(--muted); font-style:italic; }
   .icon { width:20px; text-align:center; }
   .name { flex:1; word-break:break-all; }
   .size { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
@@ -50,6 +57,7 @@
   .toast.bad { background:var(--danger); }
   .err { color:var(--danger); padding:14px; }
   .hint { color:var(--muted); font-size:11px; padding:6px 14px; }
+  .empty { color:var(--muted); padding:14px; font-size:13px; }
 </style>
 </head>
 <body>
@@ -62,23 +70,33 @@
   </div>
   <div class="crumbs" id="crumbs"></div>
   <div class="toolbar">
+    <button id="mkdir">＋ 新建文件夹</button>
+    <span class="sep"></span>
     <button class="ghost" id="cut" disabled>剪切</button>
     <button class="ghost" id="copy" disabled>复制</button>
     <button id="paste" disabled>粘贴</button>
+    <span class="sep"></span>
+    <button class="ghost" id="rename" disabled>重命名</button>
     <button class="danger" id="del" disabled>删除</button>
     <span class="clip" id="clip"></span>
   </div>
+  <div class="filterbar">
+    <input id="filter" type="text" placeholder="🔍 在当前目录中搜索文件名…" spellcheck="false" />
+    <label class="toggle"><input type="checkbox" id="showHidden" /> 显示隐藏文件</label>
+  </div>
 </header>
-<div class="hint">单击选中 · 双击文件夹进入 · 选中后用上方按钮剪切/复制/删除</div>
+<div class="hint">单击选中 · 双击文件夹进入 · 选中后可剪切/复制/重命名/删除</div>
 <ul id="list"></ul>
 <div class="toast" id="toast"></div>
 
 <script>
 const $ = (s) => document.querySelector(s);
 let current = "";          // 当前目录绝对路径
-let entries = [];          // 当前目录条目
+let entries = [];          // 当前目录全部条目(未过滤)
 let selected = null;       // 选中项 { name, kind, path }
 let clipboard = null;      // { path, name, op:'cut'|'copy' }
+let showHidden = false;    // 是否显示隐藏文件
+let filterText = "";       // 搜索框内容
 
 function join(dir, name) {
   return (dir.endsWith("/") ? dir : dir + "/") + name;
@@ -124,6 +142,7 @@ function renderCrumbs(path) {
 function updateButtons() {
   $("#cut").disabled = !selected;
   $("#copy").disabled = !selected;
+  $("#rename").disabled = !selected;
   $("#del").disabled = !selected;
   $("#paste").disabled = !clipboard;
   const c = $("#clip");
@@ -139,17 +158,33 @@ function select(entry, li) {
   updateButtons();
 }
 
+// 应用「隐藏文件开关」+「搜索框」两层过滤
+function visibleEntries() {
+  const q = filterText.trim().toLowerCase();
+  return entries.filter(e => {
+    if (!showHidden && e.name.startsWith(".")) return false;
+    if (q && !e.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
 function render() {
   const ul = $("#list");
   ul.innerHTML = "";
-  entries.sort((a, b) => {
+  const list = visibleEntries();
+  list.sort((a, b) => {
     if (a.kind !== b.kind) return a.kind === "directory" ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
-  for (const e of entries) {
+  if (list.length === 0) {
+    ul.innerHTML = '<div class="empty">' + (filterText ? "没有匹配的文件" : "(空目录)") + '</div>';
+    return;
+  }
+  for (const e of list) {
     const li = document.createElement("li");
     const full = join(current, e.name);
     if (clipboard && clipboard.op === "cut" && clipboard.path === full) li.classList.add("cut");
+    if (e.name.startsWith(".")) li.classList.add("hidden-file");
     li.innerHTML =
       '<span class="icon">' + iconFor(e.kind) + '</span>' +
       '<span class="name"></span>' +
@@ -159,6 +194,7 @@ function render() {
     li.querySelector(".copy").onclick = (ev) => { ev.stopPropagation(); copyText(full); };
     li.onclick = () => select(e, li);
     li.ondblclick = () => { if (e.kind === "directory") load(full); else copyText(full); };
+    if (selected && selected.path === full) li.classList.add("selected");
     ul.appendChild(li);
   }
 }
@@ -171,6 +207,8 @@ async function load(path) {
     current = data.path;
     entries = data.entries;
     selected = null;
+    filterText = "";
+    $("#filter").value = "";
     $("#path").value = data.path;
     renderCrumbs(data.path);
     render();
@@ -187,42 +225,67 @@ function parentOf(path) {
   return idx <= 0 ? "/" : trimmed.slice(0, idx);
 }
 
+// 通用 POST 调用,返回 true 表示成功
+async function api(url, okMsg) {
+  try {
+    const res = await fetch(url, { method: "POST" });
+    const data = await res.json();
+    if (data.error) { toast("失败: " + data.error, true); return false; }
+    if (okMsg) toast(okMsg);
+    return true;
+  } catch (err) { toast("请求失败: " + err, true); return false; }
+}
+
 async function doPaste() {
   if (!clipboard) return;
   const dest = join(current, clipboard.name);
   if (dest === clipboard.path) { toast("源和目标相同", true); return; }
-  const api = clipboard.op === "cut" ? "/api/move" : "/api/copy";
-  try {
-    const res = await fetch(api + "?from=" + encodeURIComponent(clipboard.path) + "&to=" + encodeURIComponent(dest), { method: "POST" });
-    const data = await res.json();
-    if (data.error) { toast("操作失败: " + data.error, true); return; }
-    toast(clipboard.op === "cut" ? "已移动" : "已复制");
+  const apiUrl = (clipboard.op === "cut" ? "/api/move" : "/api/copy") +
+    "?from=" + encodeURIComponent(clipboard.path) + "&to=" + encodeURIComponent(dest);
+  if (await api(apiUrl, clipboard.op === "cut" ? "已移动" : "已复制")) {
     if (clipboard.op === "cut") clipboard = null;
     load(current);
-  } catch (err) { toast("请求失败: " + err, true); }
+  }
 }
 
 async function doDelete() {
   if (!selected) return;
   if (!confirm("确定删除?\n\n" + selected.path + (selected.kind === "directory" ? "\n\n(整个文件夹及其内容)" : ""))) return;
-  try {
-    const res = await fetch("/api/delete?path=" + encodeURIComponent(selected.path), { method: "POST" });
-    const data = await res.json();
-    if (data.error) { toast("删除失败: " + data.error, true); return; }
-    toast("已删除");
+  const url = "/api/delete?path=" + encodeURIComponent(selected.path);
+  if (await api(url, "已删除")) {
     if (clipboard && clipboard.path === selected.path) clipboard = null;
     load(current);
-  } catch (err) { toast("请求失败: " + err, true); }
+  }
+}
+
+async function doMkdir() {
+  const name = prompt("新文件夹名称:", "新建文件夹");
+  if (!name) return;
+  const url = "/api/mkdir?path=" + encodeURIComponent(join(current, name));
+  if (await api(url, "已创建")) load(current);
+}
+
+async function doRename() {
+  if (!selected) return;
+  const name = prompt("重命名为:", selected.name);
+  if (!name || name === selected.name) return;
+  const url = "/api/move?from=" + encodeURIComponent(selected.path) + "&to=" + encodeURIComponent(join(current, name));
+  if (await api(url, "已重命名")) load(current);
 }
 
 $("#up").onclick = () => load(parentOf(current));
 $("#go").onclick = () => load($("#path").value);
 $("#path").addEventListener("keydown", (e) => { if (e.key === "Enter") load($("#path").value); });
 $("#copyPath").onclick = () => copyText(current);
+$("#mkdir").onclick = doMkdir;
 $("#cut").onclick = () => { if (selected) { clipboard = { ...selected, op: "cut" }; updateButtons(); render(); toast("已剪切"); } };
 $("#copy").onclick = () => { if (selected) { clipboard = { ...selected, op: "copy" }; updateButtons(); toast("已复制"); } };
 $("#paste").onclick = doPaste;
+$("#rename").onclick = doRename;
 $("#del").onclick = doDelete;
+
+$("#filter").addEventListener("input", (e) => { filterText = e.target.value; render(); });
+$("#showHidden").addEventListener("change", (e) => { showHidden = e.target.checked; render(); });
 
 // 键盘快捷键(像 Windows)
 document.addEventListener("keydown", (e) => {
@@ -230,6 +293,7 @@ document.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === "x" && selected) { e.preventDefault(); $("#cut").click(); }
   else if ((e.metaKey || e.ctrlKey) && e.key === "c" && selected) { e.preventDefault(); $("#copy").click(); }
   else if ((e.metaKey || e.ctrlKey) && e.key === "v" && clipboard) { e.preventDefault(); doPaste(); }
+  else if (e.key === "F2" && selected) { e.preventDefault(); doRename(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && selected) { e.preventDefault(); doDelete(); }
 });
 

@@ -20,8 +20,12 @@ The motivation is simple: macOS Finder is awkward — you can't see the full pat
 | ⬆ Up | Go to the parent directory |
 | 📂 Navigate | Double-click a folder to enter; double-click a file to copy its full path |
 | ✂️ Cut / Copy / Paste | Move or copy files **and folders** (recursive directory copy) |
+| ➕ New folder | Create a directory in the current location |
+| ✏️ Rename | Rename a file or folder (in-place move) |
 | 🗑️ Delete | Delete a file or an entire directory tree (with a confirmation dialog) |
-| ⌨️ Keyboard shortcuts | `Cmd/Ctrl + X / C / V` for cut/copy/paste, `Delete` to remove |
+| 👁️ Hidden files | Toggle to show/hide dot-files |
+| 🔍 Search | Live filter of the current directory by filename |
+| ⌨️ Keyboard shortcuts | `Cmd/Ctrl + X / C / V` for cut/copy/paste, `F2` to rename, `Delete` to remove |
 | 🔤 Auto sort | Directories first, then files, sorted by name |
 | 📏 File size | Auto-formatted as B / KB / MB / GB |
 
@@ -120,6 +124,10 @@ Copies a file or directory (directories are copied **recursively**).
 
 Deletes a file, or an entire directory tree.
 
+### `POST /api/mkdir?path=<abs>`
+
+Creates a new directory at `path`. (Rename reuses `/api/move` — it's just an in-place move.)
+
 **Error response** (for any of the above)
 
 ```json
@@ -171,10 +179,10 @@ Each request uses an **ArenaAllocator** that is freed as a whole when the reques
 
 - [x] Cut / copy / paste files and folders
 - [x] Delete (file / tree)
-- [ ] Create new folder / rename
+- [x] Create new folder / rename
+- [x] Toggle for hidden files
+- [x] Filename search / filter
 - [ ] Open files with the default macOS app (`open`)
-- [ ] Toggle for hidden files (dot-files are currently always listed)
-- [ ] Filename search / filter
 - [ ] Finer file-type icons
 
 ---

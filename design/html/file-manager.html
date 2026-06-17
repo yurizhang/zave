@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Explorer — Windows 11 风格文件管理器</title>
+<link rel="stylesheet" href="assets/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#eaeaea; --win:#f9f9f9; --content:#ffffff; --side:#f3f3f3;
+  --text:#1b1b1b; --muted:#5f5f5f; --faint:#909090;
+  --accent:#0067c0; --accent-soft:#e8f1fb; --accent-line:#0067c0;
+  --border:#e3e3e3; --border-strong:#d2d2d2; --hover:#ececec;
+  --folder:#e0a93a; --doc:#2b6cb0; --xls:#1f7a45; --img:#c2820a; --pdf:#c0392b; --aud:#7048b6; --zip:#6b7280;
+  --green:#1f7a45; --shadow:rgba(0,0,0,.18);
+}
+.dark{
+  --bg:#1a1a1a; --win:#202020; --content:#272727; --side:#242424;
+  --text:#f3f3f3; --muted:#a6a6a6; --faint:#7a7a7a;
+  --accent:#4cc2ff; --accent-soft:#0e3a5f; --accent-line:#4cc2ff;
+  --border:#393939; --border-strong:#454545; --hover:#323232;
+  --folder:#e7b85a; --doc:#5aa9e6; --xls:#4cc38a; --img:#e0b341; --pdf:#e57373; --aud:#a78bfa; --zip:#9ca3af;
+  --green:#4cc38a; --shadow:rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;font-family:"Segoe UI","Microsoft YaHei",system-ui,-apple-system,sans-serif}
+html,body{margin:0;height:100%}
+body{background:var(--bg);display:flex;align-items:center;justify-content:center;padding:22px;color:var(--text)}
+.win{width:1160px;max-width:100%;background:var(--win);border:1px solid var(--border-strong);border-radius:11px;overflow:hidden;box-shadow:0 18px 50px var(--shadow)}
+
+/* title bar + tabs */
+.titlebar{display:flex;align-items:center;height:44px;padding-left:10px;gap:3px;background:var(--win)}
+.tab{display:flex;align-items:center;gap:9px;height:34px;padding:0 14px;font-size:13px;color:var(--muted);border-radius:9px 9px 0 0;cursor:pointer;user-select:none}
+.tab .ti{font-size:17px}
+.tab.active{background:var(--content);color:var(--text);font-weight:600;box-shadow:0 -1px 0 var(--border) inset}
+.tab .close{font-size:14px;color:var(--faint);border-radius:5px;padding:2px}
+.tab .close:hover{background:var(--hover)}
+.newtab{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:var(--muted);cursor:pointer}
+.newtab:hover{background:var(--hover)}
+.spacer{flex:1}
+.wbtn{display:flex;align-items:center;justify-content:center;width:46px;height:44px;color:var(--muted);cursor:pointer}
+.wbtn:hover{background:var(--hover)}
+.wbtn.close:hover{background:#e81123;color:#fff}
+
+/* command bar */
+.cmdbar{display:flex;align-items:center;gap:3px;height:48px;padding:0 12px;background:var(--content);border-bottom:1px solid var(--border)}
+.cmd{display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;font-size:13px;color:var(--text);border-radius:7px;cursor:pointer;user-select:none}
+.cmd:hover{background:var(--hover)}
+.cmd .ti{font-size:17px}
+.cmd.primary{background:var(--accent-soft);color:var(--accent)}
+.iconbtn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:7px;color:var(--text);cursor:pointer}
+.iconbtn:hover{background:var(--hover)}
+.iconbtn .ti{font-size:18px}
+.sep{width:1px;height:22px;background:var(--border-strong);margin:0 6px}
+
+/* address bar */
+.addrbar{display:flex;align-items:center;gap:8px;height:50px;padding:0 14px;background:var(--content);border-bottom:1px solid var(--border)}
+.navbtn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:7px;color:var(--muted);cursor:pointer}
+.navbtn:hover{background:var(--hover)}
+.navbtn.disabled{color:var(--faint);cursor:default}
+.navbtn.disabled:hover{background:transparent}
+.address{flex:1;display:flex;align-items:center;gap:5px;height:36px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;font-size:13px;min-width:0;background:var(--content)}
+.crumb{color:var(--muted);cursor:pointer;padding:3px 6px;border-radius:5px}
+.crumb:hover{background:var(--hover);color:var(--text)}
+.crumb.cur{color:var(--text);font-weight:600}
+.search{display:flex;align-items:center;gap:8px;width:230px;height:36px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;font-size:13px;color:var(--faint)}
+.search input{border:0;outline:0;background:transparent;font-size:13px;color:var(--text);width:100%}
+.search input::placeholder{color:var(--faint)}
+
+/* body */
+.body{display:grid;grid-template-columns:230px minmax(0,1fr) 248px;min-height:470px;background:var(--content)}
+.side{background:var(--side);border-right:1px solid var(--border);padding:10px 8px;overflow:auto}
+.snode{display:flex;align-items:center;gap:9px;height:34px;padding:0 10px;font-size:13px;color:var(--text);border-radius:7px;cursor:pointer;user-select:none}
+.snode:hover{background:var(--hover)}
+.snode.active{background:var(--accent-soft);font-weight:600}
+.snode.active::before{content:"";position:absolute;left:8px;width:3px;height:16px;background:var(--accent-line);border-radius:3px}
+.snode{position:relative}
+.snode .lead{font-size:18px;color:var(--accent)}
+.snode .chev{font-size:14px;color:var(--muted);width:14px}
+.children{padding-left:16px}
+.children .snode .lead{font-size:16px;color:var(--folder)}
+.sectlabel{font-size:11px;color:var(--faint);padding:10px 12px 4px;letter-spacing:.3px}
+
+/* main */
+.main{padding:8px 10px;overflow:auto}
+.listhead{display:grid;grid-template-columns:1fr 130px 120px 90px;align-items:center;height:30px;padding:0 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)}
+.listhead span{display:flex;align-items:center;gap:4px;cursor:pointer}
+.row{display:grid;grid-template-columns:1fr 130px 120px 90px;align-items:center;height:38px;padding:0 12px;font-size:13px;border-radius:7px;cursor:pointer;user-select:none}
+.row:hover{background:var(--hover)}
+.row.sel{background:var(--accent-soft)}
+.row .nm{display:flex;align-items:center;gap:11px;min-width:0}
+.row .nm .ti{font-size:19px}
+.row .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .c{color:var(--muted);font-size:12px}
+
+/* grid view */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;padding:10px 4px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 8px;border-radius:9px;cursor:pointer;user-select:none}
+.cell:hover{background:var(--hover)}
+.cell.sel{background:var(--accent-soft)}
+.cell .ti{font-size:46px}
+.cell .label{font-size:12px;text-align:center;line-height:1.3;max-width:100%;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* details */
+.details{border-left:1px solid var(--border);padding:18px 16px;overflow:auto}
+.preview{height:140px;border-radius:9px;background:var(--side);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.preview .ti{font-size:62px}
+.dname{font-size:15px;font-weight:600;margin-bottom:2px;word-break:break-word}
+.dtype{font-size:12px;color:var(--muted);margin-bottom:16px}
+.drow{display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-top:1px solid var(--border)}
+.drow .k{color:var(--muted)}
+
+/* status */
+.statusbar{display:flex;align-items:center;gap:18px;height:30px;padding:0 16px;background:var(--win);border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.viewtoggle{display:flex;gap:2px}
+.vbtn{display:flex;align-items:center;justify-content:center;width:30px;height:24px;border-radius:6px;color:var(--muted);cursor:pointer}
+.vbtn:hover{background:var(--hover)}
+.vbtn.active{background:var(--accent-soft);color:var(--accent)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="win" id="win">
+
+  <div class="titlebar">
+    <div class="tab active"><i class="ti ti-folder"></i>Documents<i class="ti ti-x close"></i></div>
+    <div class="tab"><i class="ti ti-download"></i>Downloads<i class="ti ti-x close"></i></div>
+    <div class="newtab" title="新建标签页"><i class="ti ti-plus"></i></div>
+    <div class="spacer"></div>
+    <div class="wbtn" id="themeBtn" title="切换深色 / 浅色"><i class="ti ti-moon"></i></div>
+    <div class="wbtn"><i class="ti ti-minus"></i></div>
+    <div class="wbtn"><i class="ti ti-square" style="font-size:15px"></i></div>
+    <div class="wbtn close"><i class="ti ti-x"></i></div>
+  </div>
+
+  <div class="cmdbar">
+    <div class="cmd primary"><i class="ti ti-plus"></i>新建<i class="ti ti-chevron-down" style="font-size:13px"></i></div>
+    <div class="sep"></div>
+    <div class="iconbtn" title="剪切"><i class="ti ti-scissors"></i></div>
+    <div class="iconbtn" title="复制"><i class="ti ti-copy"></i></div>
+    <div class="iconbtn" title="粘贴"><i class="ti ti-clipboard"></i></div>
+    <div class="iconbtn" title="重命名"><i class="ti ti-pencil"></i></div>
+    <div class="iconbtn" title="共享"><i class="ti ti-share"></i></div>
+    <div class="iconbtn" title="删除"><i class="ti ti-trash"></i></div>
+    <div class="sep"></div>
+    <div class="cmd"><i class="ti ti-arrows-sort"></i>排序</div>
+    <div class="cmd" id="viewMenu"><i class="ti ti-layout-grid"></i>查看<i class="ti ti-chevron-down" style="font-size:13px"></i></div>
+    <div class="cmd"><i class="ti ti-eye"></i>显示</div>
+    <div class="spacer"></div>
+    <div class="iconbtn"><i class="ti ti-dots"></i></div>
+  </div>
+
+  <div class="addrbar">
+    <div class="navbtn" title="后退"><i class="ti ti-arrow-left"></i></div>
+    <div class="navbtn disabled" title="前进"><i class="ti ti-arrow-right"></i></div>
+    <div class="navbtn" title="向上"><i class="ti ti-arrow-up"></i></div>
+    <div class="navbtn" title="刷新"><i class="ti ti-refresh" style="font-size:17px"></i></div>
+    <div class="address">
+      <i class="ti ti-device-desktop" style="color:var(--muted);font-size:17px"></i>
+      <span class="crumb">此电脑</span><i class="ti ti-chevron-right" style="color:var(--faint);font-size:13px"></i>
+      <span class="crumb cur">Documents</span>
+      <div class="spacer"></div>
+      <i class="ti ti-chevron-right" style="color:var(--faint);font-size:13px"></i>
+    </div>
+    <div class="search"><i class="ti ti-search" style="font-size:16px"></i><input placeholder="搜索 Documents"></div>
+  </div>
+
+  <div class="body">
+
+    <nav class="side">
+      <div class="snode"><i class="ti ti-home lead"></i>主页</div>
+      <div class="snode"><i class="ti ti-photo lead"></i>图库</div>
+      <div class="snode"><i class="ti ti-cloud lead"></i>OneDrive</div>
+      <div class="sectlabel">此电脑</div>
+      <div class="snode"><i class="ti ti-chevron-down chev"></i><i class="ti ti-device-desktop lead"></i>此电脑</div>
+      <div class="children">
+        <div class="snode"><i class="ti ti-device-imac lead" style="color:var(--accent)"></i>桌面</div>
+        <div class="snode active"><i class="ti ti-folder lead"></i>Documents</div>
+        <div class="snode"><i class="ti ti-download lead" style="color:var(--accent)"></i>下载</div>
+        <div class="snode"><i class="ti ti-photo lead" style="color:var(--accent)"></i>图片</div>
+        <div class="snode"><i class="ti ti-music lead" style="color:var(--accent)"></i>音乐</div>
+        <div class="snode"><i class="ti ti-movie lead" style="color:var(--accent)"></i>视频</div>
+        <div class="snode"><i class="ti ti-database lead" style="color:var(--accent)"></i>本地磁盘 (C:)</div>
+      </div>
+      <div class="snode"><i class="ti ti-network lead"></i>网络</div>
+    </nav>
+
+    <section class="main">
+      <div class="listhead" id="listhead">
+        <span>名称 <i class="ti ti-chevron-up" style="font-size:13px"></i></span>
+        <span>修改日期</span><span>类型</span><span>大小</span>
+      </div>
+      <div id="listView"></div>
+      <div id="gridView" class="grid hidden"></div>
+    </section>
+
+    <aside class="details" id="details"></aside>
+
+  </div>
+
+  <div class="statusbar">
+    <span id="count">9 个项目</span>
+    <span id="selinfo">已选择 1 项</span>
+    <div class="spacer"></div>
+    <div class="viewtoggle">
+      <div class="vbtn active" data-view="list" title="详细列表"><i class="ti ti-layout-list"></i></div>
+      <div class="vbtn" data-view="grid" title="大图标"><i class="ti ti-layout-grid"></i></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const files=[
+  {n:"Projects",t:"folder",tl:"文件夹",ic:"ti-folder",col:"var(--folder)",d:"2026/06/14 09:12",s:"",meta:{"项目":"24 个项目"}},
+  {n:"Reports",t:"folder",tl:"文件夹",ic:"ti-folder",col:"var(--folder)",d:"2026/06/10 16:40",s:"",meta:{"项目":"11 个项目"}},
+  {n:"Invoices",t:"folder",tl:"文件夹",ic:"ti-folder",col:"var(--folder)",d:"2026/05/28 11:03",s:"",meta:{"项目":"7 个项目"}},
+  {n:"Q2 Report.docx",t:"file",tl:"Microsoft Word 文档",ic:"ti-file-text",col:"var(--doc)",d:"2026/06/16 18:22",s:"1.4 MB",meta:{"作者":"Yong","页数":"18","状态":"已同步"}},
+  {n:"Budget.xlsx",t:"file",tl:"Microsoft Excel 工作表",ic:"ti-file-spreadsheet",col:"var(--xls)",d:"2026/06/15 14:05",s:"820 KB",meta:{"工作表":"4","状态":"已同步"}},
+  {n:"cover.png",t:"file",tl:"PNG 图像",ic:"ti-photo",col:"var(--img)",d:"2026/06/12 10:31",s:"3.2 MB",meta:{"尺寸":"2400 × 1600","色深":"32 位"}},
+  {n:"contract.pdf",t:"file",tl:"PDF 文档",ic:"ti-file-typography",col:"var(--pdf)",d:"2026/06/08 09:55",s:"560 KB",meta:{"页数":"6","状态":"只读"}},
+  {n:"archive.zip",t:"file",tl:"压缩文件夹",ic:"ti-file-zip",col:"var(--zip)",d:"2026/05/30 20:18",s:"12 MB",meta:{"压缩项":"132"}},
+  {n:"notes.m4a",t:"file",tl:"音频文件",ic:"ti-music",col:"var(--aud)",d:"2026/05/22 08:47",s:"4.7 MB",meta:{"时长":"03:42"}},
+];
+let selected=3, view="list";
+const listView=document.getElementById('listView'), gridView=document.getElementById('gridView'), details=document.getElementById('details');
+
+function renderList(){
+  listView.innerHTML=files.map((f,i)=>`
+    <div class="row ${i===selected?'sel':''}" data-i="${i}">
+      <div class="nm"><i class="ti ${f.ic}" style="color:${f.col}"></i><span>${f.n}</span></div>
+      <div class="c">${f.d}</div><div class="c">${f.tl.replace('Microsoft ','').replace(' 文档','').replace(' 工作表','').replace(' 图像','').replace(' 文件夹','夹').replace('压缩夹','压缩').replace(' 文件','')}</div><div class="c">${f.s||'—'}</div>
+    </div>`).join('');
+  listView.querySelectorAll('.row').forEach(r=>r.onclick=()=>{selected=+r.dataset.i;refresh();});
+}
+function renderGrid(){
+  gridView.innerHTML=files.map((f,i)=>`
+    <div class="cell ${i===selected?'sel':''}" data-i="${i}">
+      <i class="ti ${f.ic}" style="color:${f.col}"></i><div class="label">${f.n}</div>
+    </div>`).join('');
+  gridView.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{selected=+c.dataset.i;refresh();});
+}
+function renderDetails(){
+  const f=files[selected];
+  let rows=`<div class="drow"><span class="k">类型</span><span>${f.tl}</span></div>`;
+  rows+=`<div class="drow"><span class="k">修改日期</span><span>${f.d}</span></div>`;
+  if(f.s) rows+=`<div class="drow"><span class="k">大小</span><span>${f.s}</span></div>`;
+  for(const k in f.meta){const v=f.meta[k];const c=v==='已同步'?'color:var(--green)':'';rows+=`<div class="drow"><span class="k">${k}</span><span style="${c}">${v}</span></div>`;}
+  details.innerHTML=`
+    <div class="preview"><i class="ti ${f.ic}" style="color:${f.col}"></i></div>
+    <div class="dname">${f.n}</div>
+    <div class="dtype">${f.tl}</div>
+    ${rows}`;
+}
+function refresh(){
+  document.getElementById('selinfo').textContent='已选择 1 项';
+  if(view==='list') renderList(); else renderGrid();
+  renderDetails();
+}
+document.querySelectorAll('.vbtn').forEach(b=>b.onclick=()=>{
+  view=b.dataset.view;
+  document.querySelectorAll('.vbtn').forEach(x=>x.classList.toggle('active',x===b));
+  listView.classList.toggle('hidden',view!=='list');
+  gridView.classList.toggle('hidden',view!=='grid');
+  document.getElementById('listhead').classList.toggle('hidden',view!=='list');
+  refresh();
+});
+document.getElementById('viewMenu').onclick=()=>{document.querySelector('.vbtn[data-view="'+(view==='list'?'grid':'list')+'"]').click();};
+document.getElementById('themeBtn').onclick=function(){
+  const d=document.getElementById('win').parentElement.ownerDocument.body;
+  document.documentElement.classList.toggle('dark');
+  this.querySelector('i').className='ti '+(document.documentElement.classList.contains('dark')?'ti-sun':'ti-moon');
+};
+document.querySelectorAll('.snode').forEach(n=>n.onclick=()=>{
+  document.querySelectorAll('.snode').forEach(x=>x.classList.remove('active'));
+  n.classList.add('active');
+});
+refresh();
+</script>
+</body>
+</html>
