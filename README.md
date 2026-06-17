@@ -23,6 +23,7 @@ The motivation is simple: macOS Finder is awkward — you can't see the full pat
 | ➕ New folder | Create a directory in the current location |
 | ✏️ Rename | Rename a file or folder (in-place move) |
 | 🗑️ Delete | Delete a file or an entire directory tree (with a confirmation dialog) |
+| 👁️‍🗨️ Preview | Inline preview of text/code & images in the details panel; everything else gets an "Open with default app" button (macOS `open`) |
 | 👁️ Hidden files | Toggle to show/hide dot-files |
 | 🔍 Search | Live filter of the current directory by filename |
 | ⌨️ Keyboard shortcuts | `Cmd/Ctrl + X / C / V` for cut/copy/paste, `F2` to rename, `Delete` to remove |
@@ -128,6 +129,14 @@ Deletes a file, or an entire directory tree.
 ### `POST /api/mkdir?path=<abs>`
 
 Creates a new directory at `path`. (Rename reuses `/api/move` — it's just an in-place move.)
+
+### `GET /api/file?path=<abs>`
+
+Returns the raw file bytes (capped at 16 MB) with a Content-Type guessed from the extension — used by the details panel to preview text and images.
+
+### `POST /api/open?path=<abs>`
+
+Opens the file or folder with the default application via macOS `open`.
 
 **Error response** (for any of the above)
 

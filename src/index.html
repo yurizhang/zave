@@ -98,6 +98,13 @@ body{background:var(--win);color:var(--text)}
 .details{border-left:1px solid var(--border);padding:18px 16px;overflow:auto;background:var(--content)}
 .preview{height:140px;border-radius:9px;background:var(--side);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
 .preview .ti{font-size:62px}
+.preview img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.textbox{max-height:260px;overflow:auto;background:var(--side);border-radius:9px;margin-bottom:14px;padding:10px 12px}
+.textbox pre{margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:var(--text)}
+.textbox .muted{color:var(--faint)}
+.openbtn{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:16px;width:100%;height:36px;border-radius:7px;background:var(--accent);color:#fff;border:0;font-size:13px;font-weight:600;cursor:pointer}
+.openbtn:hover{filter:brightness(1.08)}
+.openbtn .ti{font-size:16px}
 .dname{font-size:15px;font-weight:600;margin-bottom:2px;word-break:break-word}
 .dtype{font-size:12px;color:var(--muted);margin-bottom:16px}
 .drow{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:7px 0;border-top:1px solid var(--border)}
@@ -208,6 +215,7 @@ const I18N = {
     sortedBy:"Sorted by ", sortNames:{name:"name",mtime:"date",type:"type",size:"size"},
     newFolderPrompt:"New folder name:", newFolderDefault:"New folder", renamePrompt:"Rename to:",
     deleteConfirm:"Delete?", folderNote:"(entire folder and its contents)",
+    openWith:"Open with default app", opened:"Opened", openFailed:"Open failed", previewEmpty:"(empty file)", loading:"Loading…",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -233,6 +241,7 @@ const I18N = {
     sortedBy:"排序方式: ", sortNames:{name:"名称",mtime:"日期",type:"类型",size:"大小"},
     newFolderPrompt:"新文件夹名称:", newFolderDefault:"新建文件夹", renamePrompt:"重命名为:",
     deleteConfirm:"确定删除?", folderNote:"(整个文件夹及其内容)",
+    openWith:"用默认程序打开", opened:"已打开", openFailed:"打开失败", previewEmpty:"(空文件)", loading:"加载中…",
   },
 };
 let lang = "en";
@@ -278,6 +287,10 @@ const TYPE_MAP = {
   html:["ti-file-code","--doc","HTML File","HTML 文件"], css:["ti-file-code","--doc","CSS File","CSS 文件"], json:["ti-file-code","--doc","JSON File","JSON 文件"],
   py:["ti-file-code","--doc","Python File","Python 文件"], sh:["ti-file-code","--doc","Shell Script","Shell 脚本"], c:["ti-file-code","--doc","C Source","C 源文件"], rs:["ti-file-code","--doc","Rust Source","Rust 源文件"],
 };
+const IMG_EXT = new Set(["png","jpg","jpeg","gif","webp","svg","bmp","ico"]);
+const TEXT_EXT = new Set(["txt","md","markdown","log","csv","tsv","json","js","mjs","cjs","ts","jsx","tsx","css","scss","less","html","htm","xml","yaml","yml","toml","ini","conf","cfg","env","c","h","cpp","cc","hpp","cxx","m","mm","py","sh","bash","zsh","zig","rs","go","java","kt","rb","php","sql","vue","svelte","lua","pl","r","swift","gradle","properties","gitignore","dockerfile","makefile"]);
+const IMG_MAX = 8*1024*1024, TEXT_MAX = 1024*1024;
+
 function meta(e){
   if(e.kind==="directory") return {ic:"ti-folder", col:"--folder", tl:t("folder")};
   const m=TYPE_MAP[ext(e.name)];
@@ -415,13 +428,46 @@ function bindRows(container,sel){
 function renderDetails(){
   const d=$("#details"), e=entries.find(x=>x.name===selName);
   if(!e){ d.innerHTML=`<div class="dempty">${t("noSelection")}<br>${t("clickHint")}</div>`; return; }
-  const m=meta(e);
+  const m=meta(e), full=join(current,e.name), ex=ext(e.name), isFile=e.kind!=="directory";
+  const url="/api/file?path="+encodeURIComponent(full);
+
+  // ── preview area ──
+  let previewHtml, fillText=false;
+  if(isFile && IMG_EXT.has(ex) && e.size<=IMG_MAX){
+    previewHtml=`<div class="preview"><img src="${url}" alt=""></div>`;
+  } else if(isFile && (TEXT_EXT.has(ex) || ex==="") && e.size<=TEXT_MAX){
+    previewHtml=`<div class="textbox" id="textPrev"><span class="muted">${t("loading")}</span></div>`;
+    fillText=true;
+  } else {
+    previewHtml=`<div class="preview"><i class="ti ${m.ic}" style="color:var(${m.col})"></i></div>`;
+  }
+
+  // ── property rows ──
   let rows=`<div class="drow"><span class="k">${t("type")}</span><span class="v">${m.tl}</span></div>`;
   rows+=`<div class="drow"><span class="k">${t("dateModified")}</span><span class="v">${fmtDate(e.mtime)}</span></div>`;
-  if(e.kind!=="directory") rows+=`<div class="drow"><span class="k">${t("size")}</span><span class="v">${fmtSize(e.size,false)}</span></div>`;
-  rows+=`<div class="drow"><span class="k">${t("fullPath")}</span><span class="v">${escapeHtml(join(current,e.name))}</span></div>`;
-  d.innerHTML=`<div class="preview"><i class="ti ${m.ic}" style="color:var(${m.col})"></i></div>
-    <div class="dname">${escapeHtml(e.name)}</div><div class="dtype">${m.tl}</div>${rows}`;
+  if(isFile) rows+=`<div class="drow"><span class="k">${t("size")}</span><span class="v">${fmtSize(e.size,false)}</span></div>`;
+  rows+=`<div class="drow"><span class="k">${t("fullPath")}</span><span class="v">${escapeHtml(full)}</span></div>`;
+
+  d.innerHTML=`${previewHtml}<div class="dname">${escapeHtml(e.name)}</div><div class="dtype">${m.tl}</div>${rows}
+    <button class="openbtn" id="openBtn"><i class="ti ti-external-link"></i>${t("openWith")}</button>`;
+  $("#openBtn").onclick=()=>openExternal(full);
+
+  // ── lazily load text preview ──
+  if(fillText){
+    const box=$("#textPrev"); const want=full;
+    fetch(url).then(r=>r.text()).then(txt=>{
+      if(selName!==e.name || join(current,selName)!==want) return; // selection changed
+      if(!box.isConnected) return;
+      const clipped=txt.length>20000;
+      const pre=document.createElement("pre");
+      pre.textContent = clipped ? txt.slice(0,20000)+"\n\n…" : (txt || "");
+      box.innerHTML=""; box.appendChild(pre);
+      if(!txt) box.innerHTML=`<span class="muted">${t("previewEmpty")}</span>`;
+    }).catch(()=>{ if(box.isConnected) box.innerHTML=`<span class="muted">—</span>`; });
+  }
+}
+async function openExternal(path){
+  if(await api("/api/open?path="+encodeURIComponent(path),t("opened"))) {}
 }
 function updateButtons(){
   const has=!!selName;

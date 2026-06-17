@@ -9,6 +9,9 @@ const tabler_woff2 = @embedFile("assets/fonts/tabler-icons.woff2");
 
 const port: u16 = 8080;
 
+/// Max bytes served by /api/file (cap so a huge file can't exhaust memory).
+const max_file = 16 * 1024 * 1024;
+
 /// Read $HOME; fall back to "/" if unset.
 fn homeDir() []const u8 {
     if (std.c.getenv("HOME")) |h| return std.mem.span(h);
@@ -65,6 +68,8 @@ fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     if (std.mem.startsWith(u8, target, "/api/copy")) return handleTransfer(io, gpa, req, target, .copy);
     if (std.mem.startsWith(u8, target, "/api/delete")) return handleDelete(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/mkdir")) return handleMkdir(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/file")) return handleFile(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/open")) return handleOpen(io, gpa, req, target);
 
     if (std.mem.startsWith(u8, target, "/assets/fonts/tabler-icons.woff2")) {
         return req.respond(tabler_woff2, .{
@@ -245,6 +250,70 @@ fn doMkdir(io: Io, path: []const u8) !void {
     if (path.len == 0) return error.MissingParam;
     if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
     try Io.Dir.createDirAbsolute(io, path, .default_dir);
+}
+
+// ───────────────────────── raw file (preview) ─────────────────────────
+
+fn handleFile(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const path = try percentDecode(arena, queryParam(target, "path") orelse "");
+    serveFile(io, arena, req, path) catch |err| return respondErr(req, arena, err);
+}
+
+fn serveFile(io: Io, arena: std.mem.Allocator, req: *http.Server.Request, path: []const u8) !void {
+    if (path.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
+
+    const st = try Io.Dir.cwd().statFile(io, path, .{});
+    if (st.kind == .directory) return error.IsDir;
+
+    const cap: usize = @intCast(@min(st.size, max_file));
+    const buf = try arena.alloc(u8, cap);
+    const data = try Io.Dir.cwd().readFile(io, path, buf);
+
+    try req.respond(data, .{
+        .extra_headers = &.{.{ .name = "content-type", .value = contentType(path) }},
+    });
+}
+
+/// Guess a Content-Type from the file extension (enough for browser preview).
+fn contentType(path: []const u8) []const u8 {
+    const dot = std.mem.lastIndexOfScalar(u8, path, '.') orelse return "application/octet-stream";
+    const e = path[dot + 1 ..];
+    const eql = std.ascii.eqlIgnoreCase;
+    if (eql(e, "png")) return "image/png";
+    if (eql(e, "jpg") or eql(e, "jpeg")) return "image/jpeg";
+    if (eql(e, "gif")) return "image/gif";
+    if (eql(e, "webp")) return "image/webp";
+    if (eql(e, "svg")) return "image/svg+xml";
+    if (eql(e, "bmp")) return "image/bmp";
+    if (eql(e, "ico")) return "image/x-icon";
+    if (eql(e, "pdf")) return "application/pdf";
+    // everything else previewable is treated as UTF-8 text
+    return "text/plain; charset=utf-8";
+}
+
+// ───────────────────────── open with default app ─────────────────────────
+
+fn handleOpen(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const path = try percentDecode(arena, queryParam(target, "path") orelse "");
+    doOpen(io, path) catch |err| return respondErr(req, arena, err);
+    try respondOk(req);
+}
+
+fn doOpen(io: Io, path: []const u8) !void {
+    if (path.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
+
+    var child = try std.process.spawn(io, .{ .argv = &.{ "/usr/bin/open", path } });
+    _ = try child.wait(io);
 }
 
 // ───────────────────────── shared responses ─────────────────────────
