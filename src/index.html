@@ -57,6 +57,8 @@ body{background:var(--win);color:var(--text)}
 .crumb{color:var(--muted);cursor:pointer;padding:3px 6px;border-radius:5px;white-space:nowrap}
 .crumb:hover{background:var(--hover);color:var(--text)}
 .crumb.cur{color:var(--text);font-weight:600}
+.addr-copy{font-size:16px;color:var(--muted);cursor:pointer;padding:5px;border-radius:5px;flex:0 0 auto}
+.addr-copy:hover{background:var(--hover);color:var(--accent)}
 .search{display:flex;align-items:center;gap:8px;width:230px;height:36px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;font-size:13px;color:var(--faint)}
 .search input{border:0;outline:0;background:transparent;font-size:13px;color:var(--text);width:100%}
 .search input::placeholder{color:var(--faint)}
@@ -190,7 +192,7 @@ const I18N = {
     back:"Back", forward:"Forward", up:"Up", refresh:"Refresh",
     name:"Name", dateModified:"Date modified", type:"Type", size:"Size",
     details:"Details", largeIcons:"Large icons",
-    thisMac:"This Mac", searchPrefix:"Search ",
+    thisMac:"This Mac", searchPrefix:"Search ", copyPath:"Copy current path",
     Home:"Home", Pictures:"Pictures", Locations:"Locations", Desktop:"Desktop",
     Documents:"Documents", Downloads:"Downloads", Music:"Music", Movies:"Movies",
     Applications:"Applications", Root:"Root",
@@ -215,7 +217,7 @@ const I18N = {
     back:"后退", forward:"前进", up:"向上", refresh:"刷新",
     name:"名称", dateModified:"修改日期", type:"类型", size:"大小",
     details:"详细列表", largeIcons:"大图标",
-    thisMac:"此电脑", searchPrefix:"搜索 ",
+    thisMac:"此电脑", searchPrefix:"搜索 ", copyPath:"复制当前路径",
     Home:"主页", Pictures:"图片", Locations:"位置", Desktop:"桌面",
     Documents:"文稿", Downloads:"下载", Music:"音乐", Movies:"影片",
     Applications:"应用程序", Root:"磁盘根目录",
@@ -339,6 +341,10 @@ function buildCrumbs(){
   c.appendChild(mk(t("thisMac"),"/",parts.length===0,"ti-device-desktop"));
   let acc="";
   parts.forEach((p,i)=>{ acc+="/"+p; c.appendChild(chev()); c.appendChild(mk(p,acc,i===parts.length-1)); });
+  // right-aligned "copy current path" icon
+  const sp=document.createElement("div"); sp.className="spacer"; c.appendChild(sp);
+  const cp=document.createElement("i"); cp.className="ti ti-copy addr-copy"; cp.title=t("copyPath");
+  cp.onclick=(ev)=>{ ev.stopPropagation(); copyText(current); }; c.appendChild(cp);
 }
 
 // ───────── filter + sort ─────────
