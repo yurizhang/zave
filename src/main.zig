@@ -7,6 +7,8 @@ const index_html = @embedFile("index.html");
 
 const port: u16 = 8080;
 
+const json_ct: []const http.Header = &.{.{ .name = "content-type", .value = "application/json; charset=utf-8" }};
+
 pub fn main() !void {
     const gpa = std.heap.page_allocator;
 
@@ -45,21 +47,24 @@ fn handleConn(io: Io, gpa: std.mem.Allocator, stream: net.Stream) void {
     }
 }
 
+const Op = enum { move, copy };
+
 fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     const target = req.head.target;
 
-    if (std.mem.startsWith(u8, target, "/api/list")) {
-        try handleList(io, gpa, req, target);
-        return;
-    }
+    if (std.mem.startsWith(u8, target, "/api/list")) return handleList(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/move")) return handleTransfer(io, gpa, req, target, .move);
+    if (std.mem.startsWith(u8, target, "/api/copy")) return handleTransfer(io, gpa, req, target, .copy);
+    if (std.mem.startsWith(u8, target, "/api/delete")) return handleDelete(io, gpa, req, target);
 
     try req.respond(index_html, .{
         .extra_headers = &.{.{ .name = "content-type", .value = "text/html; charset=utf-8" }},
     });
 }
 
+// ───────────────────────── 列目录 ─────────────────────────
+
 fn handleList(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
-    // 每个请求用一个 arena，结束统一释放，省心。
     var arena_state = std.heap.ArenaAllocator.init(gpa);
     defer arena_state.deinit();
     const arena = arena_state.allocator();
@@ -74,9 +79,7 @@ fn handleList(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target:
         break :blk aw.written();
     };
 
-    try req.respond(json, .{
-        .extra_headers = &.{.{ .name = "content-type", .value = "application/json; charset=utf-8" }},
-    });
+    try req.respond(json, .{ .extra_headers = json_ct });
 }
 
 fn buildListing(io: Io, arena: std.mem.Allocator, path: []const u8) ![]u8 {
@@ -113,6 +116,109 @@ fn buildListing(io: Io, arena: std.mem.Allocator, path: []const u8) ![]u8 {
     try w.writeAll("]}");
     return aw.written();
 }
+
+// ───────────────────────── 移动 / 复制 ─────────────────────────
+
+fn handleTransfer(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8, op: Op) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const from = try percentDecode(arena, queryParam(target, "from") orelse "");
+    const to = try percentDecode(arena, queryParam(target, "to") orelse "");
+
+    doTransfer(io, arena, op, from, to) catch |err| return respondErr(req, arena, err);
+    try respondOk(req);
+}
+
+fn doTransfer(io: Io, arena: std.mem.Allocator, op: Op, from: []const u8, to: []const u8) !void {
+    if (from.len == 0 or to.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(from) or !std.fs.path.isAbsolute(to)) return error.NotAbsolute;
+    if (std.mem.eql(u8, from, to)) return error.SameLocation;
+
+    switch (op) {
+        .move => try Io.Dir.renameAbsolute(from, to, io),
+        .copy => {
+            // 防止把目录复制进它自己的子目录里（会无限递归）
+            const from_slash = try std.fmt.allocPrint(arena, "{s}/", .{from});
+            if (std.mem.startsWith(u8, to, from_slash)) return error.IntoItself;
+            try copyPath(io, arena, from, to);
+        },
+    }
+}
+
+fn copyPath(io: Io, arena: std.mem.Allocator, src: []const u8, dst: []const u8) !void {
+    const st = try Io.Dir.cwd().statFile(io, src, .{});
+    if (st.kind == .directory) {
+        try copyTree(io, arena, src, dst);
+    } else {
+        try Io.Dir.copyFileAbsolute(src, dst, io, .{});
+    }
+}
+
+fn copyTree(io: Io, arena: std.mem.Allocator, src: []const u8, dst: []const u8) !void {
+    try Io.Dir.createDirAbsolute(io, dst, .default_dir);
+
+    var dir = try Io.Dir.openDirAbsolute(io, src, .{ .iterate = true });
+    defer dir.close(io);
+
+    var it = dir.iterate();
+    while (try it.next(io)) |entry| {
+        const child_src = try std.fmt.allocPrint(arena, "{s}/{s}", .{ src, entry.name });
+        const child_dst = try std.fmt.allocPrint(arena, "{s}/{s}", .{ dst, entry.name });
+        if (entry.kind == .directory) {
+            try copyTree(io, arena, child_src, child_dst);
+        } else {
+            try Io.Dir.copyFileAbsolute(child_src, child_dst, io, .{});
+        }
+    }
+}
+
+// ───────────────────────── 删除 ─────────────────────────
+
+fn handleDelete(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const path = try percentDecode(arena, queryParam(target, "path") orelse "");
+
+    doDelete(io, path) catch |err| return respondErr(req, arena, err);
+    try respondOk(req);
+}
+
+fn doDelete(io: Io, path: []const u8) !void {
+    if (path.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
+    if (std.mem.eql(u8, path, "/")) return error.RefusingToDeleteRoot;
+
+    const st = try Io.Dir.cwd().statFile(io, path, .{});
+    if (st.kind == .directory) {
+        try Io.Dir.cwd().deleteTree(io, path);
+    } else {
+        try Io.Dir.deleteFileAbsolute(io, path);
+    }
+}
+
+// ───────────────────────── 通用响应 ─────────────────────────
+
+fn respondOk(req: *http.Server.Request) !void {
+    // keep_alive=false：写操作是 POST，可能不带 Content-Length，
+    // 关掉连接复用可避开 discardBody 对 body 边界的断言。
+    try req.respond("{\"ok\":true}", .{ .extra_headers = json_ct, .keep_alive = false });
+}
+
+fn respondErr(req: *http.Server.Request, arena: std.mem.Allocator, err: anyerror) !void {
+    var aw = std.Io.Writer.Allocating.init(arena);
+    try aw.writer.print("{{\"error\":\"{s}\"}}", .{@errorName(err)});
+    try req.respond(aw.written(), .{
+        .status = .bad_request,
+        .extra_headers = json_ct,
+        .keep_alive = false,
+    });
+}
+
+// ───────────────────────── 工具函数 ─────────────────────────
 
 /// 从 "/api/list?path=%2Ffoo" 这样的 target 里取出某个查询参数（未解码）。
 fn queryParam(target: []const u8, key: []const u8) ?[]const u8 {
