@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>文件管理器</title>
+<style>
+  :root { --bg:#1e1e2e; --panel:#27293d; --fg:#cdd6f4; --muted:#9399b2; --accent:#89b4fa; --hover:#313244; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC",system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+  header { position:sticky; top:0; background:var(--panel); padding:10px 14px; border-bottom:1px solid #00000040; }
+  .pathbar { display:flex; gap:8px; align-items:center; }
+  .pathbar input {
+    flex:1; background:var(--bg); color:var(--fg); border:1px solid #45475a;
+    border-radius:6px; padding:8px 10px; font-family:ui-monospace,Menlo,monospace; font-size:13px;
+  }
+  button {
+    background:var(--accent); color:#11111b; border:none; border-radius:6px;
+    padding:8px 12px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  button.ghost { background:var(--hover); color:var(--fg); }
+  button:active { transform:translateY(1px); }
+  .crumbs { margin-top:8px; font-size:12px; color:var(--muted); word-break:break-all; }
+  .crumbs a { color:var(--accent); text-decoration:none; cursor:pointer; }
+  .crumbs a:hover { text-decoration:underline; }
+  ul { list-style:none; margin:0; padding:0; }
+  li {
+    display:flex; align-items:center; gap:10px; padding:8px 14px;
+    border-bottom:1px solid #ffffff08; cursor:pointer;
+  }
+  li:hover { background:var(--hover); }
+  .icon { width:20px; text-align:center; }
+  .name { flex:1; word-break:break-all; }
+  .size { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+  .copy { opacity:0; font-size:11px; padding:4px 8px; }
+  li:hover .copy { opacity:1; }
+  .toast {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--accent); color:#11111b; padding:10px 18px; border-radius:8px;
+    font-weight:600; opacity:0; transition:opacity .2s; pointer-events:none;
+  }
+  .toast.show { opacity:1; }
+  .err { color:#f38ba8; padding:14px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="pathbar">
+    <button class="ghost" id="up" title="上一级">⬆</button>
+    <input id="path" spellcheck="false" />
+    <button id="go">跳转</button>
+    <button class="ghost" id="copyPath" title="复制当前完整路径">复制路径</button>
+  </div>
+  <div class="crumbs" id="crumbs"></div>
+</header>
+<ul id="list"></ul>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let current = "";
+
+function fmtSize(n, kind) {
+  if (kind === "directory") return "";
+  if (n < 1024) return n + " B";
+  if (n < 1024*1024) return (n/1024).toFixed(1) + " KB";
+  if (n < 1024*1024*1024) return (n/1024/1024).toFixed(1) + " MB";
+  return (n/1024/1024/1024).toFixed(2) + " GB";
+}
+function iconFor(kind) {
+  return kind === "directory" ? "📁" : "📄";
+}
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1400);
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast("已复制: " + text); }
+  catch { toast("复制失败"); }
+}
+function renderCrumbs(path) {
+  const c = $("#crumbs");
+  c.innerHTML = "";
+  const parts = path.split("/").filter(Boolean);
+  let acc = "";
+  const root = document.createElement("a");
+  root.textContent = "/"; root.onclick = () => load("/");
+  c.appendChild(root);
+  parts.forEach((p, i) => {
+    acc += "/" + p;
+    const a = document.createElement("a");
+    a.textContent = p; const full = acc;
+    a.onclick = () => load(full);
+    c.appendChild(a);
+    if (i < parts.length - 1) c.appendChild(document.createTextNode(" / "));
+  });
+}
+async function load(path) {
+  try {
+    const res = await fetch("/api/list?path=" + encodeURIComponent(path));
+    const data = await res.json();
+    if (data.error) { $("#list").innerHTML = '<div class="err">' + data.error + '</div>'; return; }
+    current = data.path;
+    $("#path").value = data.path;
+    renderCrumbs(data.path);
+    const ul = $("#list");
+    ul.innerHTML = "";
+    data.entries.sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === "directory" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    for (const e of data.entries) {
+      const li = document.createElement("li");
+      const full = (data.path.endsWith("/") ? data.path : data.path + "/") + e.name;
+      li.innerHTML =
+        '<span class="icon">' + iconFor(e.kind) + '</span>' +
+        '<span class="name">' + e.name + '</span>' +
+        '<span class="size">' + fmtSize(e.size, e.kind) + '</span>' +
+        '<button class="copy ghost">复制</button>';
+      li.querySelector(".copy").onclick = (ev) => { ev.stopPropagation(); copy(full); };
+      if (e.kind === "directory") li.onclick = () => load(full);
+      else li.onclick = () => copy(full);
+      ul.appendChild(li);
+    }
+  } catch (err) {
+    $("#list").innerHTML = '<div class="err">加载失败: ' + err + '</div>';
+  }
+}
+function parentOf(path) {
+  if (path === "/" || path === "") return path;
+  const trimmed = path.replace(/\/+$/, "");
+  const idx = trimmed.lastIndexOf("/");
+  return idx <= 0 ? "/" : trimmed.slice(0, idx);
+}
+$("#up").onclick = () => load(parentOf(current));
+$("#go").onclick = () => load($("#path").value);
+$("#path").addEventListener("keydown", (e) => { if (e.key === "Enter") load($("#path").value); });
+$("#copyPath").onclick = () => copy(current);
+
+load("");
+</script>
+</body>
+</html>

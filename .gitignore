@@ -1,0 +1,6 @@
+# Zig 构建产物
+zig-out/
+.zig-cache/
+
+# macOS
+.DS_Store
