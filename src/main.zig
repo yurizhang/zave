@@ -9,7 +9,7 @@ const tabler_woff2 = @embedFile("assets/fonts/tabler-icons.woff2");
 
 const port: u16 = 8080;
 
-/// 读取 $HOME；读不到时退回 "/"。
+/// Read $HOME; fall back to "/" if unset.
 fn homeDir() []const u8 {
     if (std.c.getenv("HOME")) |h| return std.mem.span(h);
     return "/";
@@ -28,11 +28,11 @@ pub fn main() !void {
     var server = try addr.listen(io, .{ .reuse_address = true });
     defer server.deinit(io);
 
-    std.debug.print("文件管理器已启动 → http://127.0.0.1:{d}\n", .{port});
+    std.debug.print("File manager started → http://127.0.0.1:{d}\n", .{port});
 
     while (true) {
         const stream = server.accept(io) catch |err| {
-            std.debug.print("accept 出错: {s}\n", .{@errorName(err)});
+            std.debug.print("accept error: {s}\n", .{@errorName(err)});
             continue;
         };
         handleConn(io, gpa, stream);
@@ -88,7 +88,7 @@ fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     });
 }
 
-// ───────────────────────── 列目录 ─────────────────────────
+// ───────────────────────── list directory ─────────────────────────
 
 fn handleList(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
     var arena_state = std.heap.ArenaAllocator.init(gpa);
@@ -101,7 +101,7 @@ fn handleList(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target:
 
     const json = buildListing(io, arena, path) catch |err| blk: {
         var aw = std.Io.Writer.Allocating.init(arena);
-        try aw.writer.print("{{\"error\":\"无法打开: {s} ({s})\"}}", .{ path, @errorName(err) });
+        try aw.writer.print("{{\"error\":\"Cannot open {s} ({s})\"}}", .{ path, @errorName(err) });
         break :blk aw.written();
     };
 
@@ -145,7 +145,7 @@ fn buildListing(io: Io, arena: std.mem.Allocator, path: []const u8) ![]u8 {
     return aw.written();
 }
 
-// ───────────────────────── 移动 / 复制 ─────────────────────────
+// ───────────────────────── move / copy ─────────────────────────
 
 fn handleTransfer(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8, op: Op) !void {
     var arena_state = std.heap.ArenaAllocator.init(gpa);
@@ -167,7 +167,7 @@ fn doTransfer(io: Io, arena: std.mem.Allocator, op: Op, from: []const u8, to: []
     switch (op) {
         .move => try Io.Dir.renameAbsolute(from, to, io),
         .copy => {
-            // 防止把目录复制进它自己的子目录里（会无限递归）
+            // prevent copying a directory into its own subtree (infinite recursion)
             const from_slash = try std.fmt.allocPrint(arena, "{s}/", .{from});
             if (std.mem.startsWith(u8, to, from_slash)) return error.IntoItself;
             try copyPath(io, arena, from, to);
@@ -202,7 +202,7 @@ fn copyTree(io: Io, arena: std.mem.Allocator, src: []const u8, dst: []const u8) 
     }
 }
 
-// ───────────────────────── 删除 ─────────────────────────
+// ───────────────────────── delete ─────────────────────────
 
 fn handleDelete(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
     var arena_state = std.heap.ArenaAllocator.init(gpa);
@@ -228,7 +228,7 @@ fn doDelete(io: Io, path: []const u8) !void {
     }
 }
 
-// ───────────────────────── 新建文件夹 ─────────────────────────
+// ───────────────────────── make directory ─────────────────────────
 
 fn handleMkdir(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
     var arena_state = std.heap.ArenaAllocator.init(gpa);
@@ -247,11 +247,11 @@ fn doMkdir(io: Io, path: []const u8) !void {
     try Io.Dir.createDirAbsolute(io, path, .default_dir);
 }
 
-// ───────────────────────── 通用响应 ─────────────────────────
+// ───────────────────────── shared responses ─────────────────────────
 
 fn respondOk(req: *http.Server.Request) !void {
-    // keep_alive=false：写操作是 POST，可能不带 Content-Length，
-    // 关掉连接复用可避开 discardBody 对 body 边界的断言。
+    // keep_alive=false: write ops are POSTs that may carry no Content-Length;
+    // disabling connection reuse avoids discardBody asserting on body length.
     try req.respond("{\"ok\":true}", .{ .extra_headers = json_ct, .keep_alive = false });
 }
 
@@ -265,9 +265,9 @@ fn respondErr(req: *http.Server.Request, arena: std.mem.Allocator, err: anyerror
     });
 }
 
-// ───────────────────────── 工具函数 ─────────────────────────
+// ───────────────────────── utilities ─────────────────────────
 
-/// 从 "/api/list?path=%2Ffoo" 这样的 target 里取出某个查询参数（未解码）。
+/// Extract a (still URL-encoded) query parameter from a target like "/api/list?path=%2Ffoo".
 fn queryParam(target: []const u8, key: []const u8) ?[]const u8 {
     const q = std.mem.indexOfScalar(u8, target, '?') orelse return null;
     var it = std.mem.splitScalar(u8, target[q + 1 ..], '&');
@@ -278,7 +278,7 @@ fn queryParam(target: []const u8, key: []const u8) ?[]const u8 {
     return null;
 }
 
-/// URL 百分号解码：%XX → 字节，'+' → 空格。
+/// URL percent-decoding: %XX → byte, '+' → space.
 fn percentDecode(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
     var out = try alloc.alloc(u8, s.len);
     var i: usize = 0;
@@ -313,7 +313,7 @@ fn percentDecode(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
     return out[0..j];
 }
 
-/// 把字符串作为合法 JSON 字符串写出（带引号、转义）。
+/// Write a string as a valid JSON string (quoted and escaped).
 fn writeJsonString(w: *std.Io.Writer, s: []const u8) !void {
     try w.writeByte('"');
     for (s) |c| switch (c) {

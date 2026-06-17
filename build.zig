@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
-            .link_libc = true, // 为了用 std.c.getenv 读取 $HOME
+            .link_libc = true, // for std.c.getenv to read $HOME
         }),
     });
 
@@ -20,6 +20,6 @@ pub fn build(b: *std.Build) void {
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| run_cmd.addArgs(args);
 
-    const run_step = b.step("run", "运行文件管理器服务");
+    const run_step = b.step("run", "Run the file manager server");
     run_step.dependOn(&run_cmd.step);
 }

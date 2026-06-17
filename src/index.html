@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>文件管理器</title>
+<title>File Manager</title>
 <link rel="stylesheet" href="/assets/tabler-icons.min.css">
 <style>
 :root{
@@ -22,7 +22,7 @@
   --folder:#e7b85a; --doc:#5aa9e6; --xls:#4cc38a; --img:#e0b341; --pdf:#e57373; --aud:#a78bfa; --zip:#9ca3af;
   --green:#4cc38a; --shadow:rgba(0,0,0,.5);
 }
-*{box-sizing:border-box;font-family:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;font-family:"Segoe UI",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
 html,body{margin:0;height:100%}
 body{background:var(--win);color:var(--text)}
 .win{width:100%;height:100vh;background:var(--win);display:flex;flex-direction:column;overflow:hidden}
@@ -32,7 +32,7 @@ body{background:var(--win);color:var(--text)}
 .tab .ti{font-size:17px}
 .tab .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .spacer{flex:1}
-.wbtn{display:flex;align-items:center;justify-content:center;width:46px;height:44px;color:var(--muted);cursor:pointer}
+.wbtn{display:flex;align-items:center;justify-content:center;min-width:46px;height:44px;padding:0 8px;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600}
 .wbtn:hover{background:var(--hover)}
 
 .cmdbar{display:flex;align-items:center;gap:3px;height:48px;padding:0 12px;background:var(--content);border-bottom:1px solid var(--border);flex:0 0 auto}
@@ -73,10 +73,10 @@ body{background:var(--win);color:var(--text)}
 .sectlabel{font-size:11px;color:var(--faint);padding:10px 12px 4px;letter-spacing:.3px}
 
 .main{padding:8px 10px;overflow:auto;display:flex;flex-direction:column}
-.listhead{display:grid;grid-template-columns:1fr 150px 130px 90px;align-items:center;height:30px;padding:0 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);flex:0 0 auto}
+.listhead{display:grid;grid-template-columns:1fr 160px 150px 90px;align-items:center;height:30px;padding:0 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);flex:0 0 auto}
 .listhead span{display:flex;align-items:center;gap:4px;cursor:pointer}
 .listhead span:hover{color:var(--text)}
-.row{display:grid;grid-template-columns:1fr 150px 130px 90px;align-items:center;height:38px;padding:0 12px;font-size:13px;border-radius:7px;cursor:pointer;user-select:none}
+.row{display:grid;grid-template-columns:1fr 160px 150px 90px;align-items:center;height:38px;padding:0 12px;font-size:13px;border-radius:7px;cursor:pointer;user-select:none}
 .row:hover{background:var(--hover)}
 .row.sel{background:var(--accent-soft)}
 .row.cut{opacity:.5}
@@ -119,41 +119,44 @@ body{background:var(--win);color:var(--text)}
 <div class="win">
 
   <div class="titlebar">
-    <div class="tab"><i class="ti ti-folder"></i><span class="nm" id="tabName">文件管理器</span></div>
+    <div class="tab"><i class="ti ti-folder"></i><span class="nm" id="tabName">File Manager</span></div>
     <div class="spacer"></div>
-    <div class="wbtn" id="themeBtn" title="切换深色 / 浅色"><i class="ti ti-moon"></i></div>
+    <div class="wbtn" id="langBtn" data-i18n-title="lang">中</div>
+    <div class="wbtn" id="themeBtn" data-i18n-title="theme"><i class="ti ti-moon"></i></div>
   </div>
 
   <div class="cmdbar">
-    <div class="cmd primary" id="mkdirBtn"><i class="ti ti-plus"></i>新建文件夹</div>
+    <div class="cmd primary" id="mkdirBtn"><i class="ti ti-plus"></i><span data-i18n="newFolder">New folder</span></div>
     <div class="sep"></div>
-    <div class="iconbtn" id="cutBtn" title="剪切 (Ctrl/Cmd+X)"><i class="ti ti-scissors"></i></div>
-    <div class="iconbtn" id="copyBtn" title="复制 (Ctrl/Cmd+C)"><i class="ti ti-copy"></i></div>
-    <div class="iconbtn" id="pasteBtn" title="粘贴 (Ctrl/Cmd+V)"><i class="ti ti-clipboard"></i></div>
-    <div class="iconbtn" id="renameBtn" title="重命名 (F2)"><i class="ti ti-pencil"></i></div>
-    <div class="iconbtn" id="shareBtn" title="复制完整路径"><i class="ti ti-share"></i></div>
-    <div class="iconbtn" id="delBtn" title="删除 (Delete)"><i class="ti ti-trash"></i></div>
+    <div class="iconbtn" id="cutBtn" data-i18n-title="cut"><i class="ti ti-scissors"></i></div>
+    <div class="iconbtn" id="copyBtn" data-i18n-title="copy"><i class="ti ti-copy"></i></div>
+    <div class="iconbtn" id="pasteBtn" data-i18n-title="paste"><i class="ti ti-clipboard"></i></div>
+    <div class="iconbtn" id="renameBtn" data-i18n-title="rename"><i class="ti ti-pencil"></i></div>
+    <div class="iconbtn" id="shareBtn" data-i18n-title="share"><i class="ti ti-share"></i></div>
+    <div class="iconbtn" id="delBtn" data-i18n-title="del"><i class="ti ti-trash"></i></div>
     <div class="sep"></div>
-    <div class="cmd" id="sortBtn"><i class="ti ti-arrows-sort"></i>排序</div>
-    <div class="cmd" id="viewMenu"><i class="ti ti-layout-grid"></i>查看</div>
-    <div class="cmd" id="hiddenBtn"><i class="ti ti-eye"></i>显示隐藏</div>
+    <div class="cmd" id="sortBtn"><i class="ti ti-arrows-sort"></i><span data-i18n="sort">Sort</span></div>
+    <div class="cmd" id="viewMenu"><i class="ti ti-layout-grid"></i><span data-i18n="view">View</span></div>
+    <div class="cmd" id="hiddenBtn"><i class="ti ti-eye"></i><span data-i18n="hidden">Hidden</span></div>
   </div>
 
   <div class="addrbar">
-    <div class="navbtn" id="backBtn" title="后退"><i class="ti ti-arrow-left"></i></div>
-    <div class="navbtn" id="fwdBtn" title="前进"><i class="ti ti-arrow-right"></i></div>
-    <div class="navbtn" id="upBtn" title="向上"><i class="ti ti-arrow-up"></i></div>
-    <div class="navbtn" id="refreshBtn" title="刷新"><i class="ti ti-refresh" style="font-size:17px"></i></div>
+    <div class="navbtn" id="backBtn" data-i18n-title="back"><i class="ti ti-arrow-left"></i></div>
+    <div class="navbtn" id="fwdBtn" data-i18n-title="forward"><i class="ti ti-arrow-right"></i></div>
+    <div class="navbtn" id="upBtn" data-i18n-title="up"><i class="ti ti-arrow-up"></i></div>
+    <div class="navbtn" id="refreshBtn" data-i18n-title="refresh"><i class="ti ti-refresh" style="font-size:17px"></i></div>
     <div class="address" id="crumbs"></div>
-    <div class="search"><i class="ti ti-search" style="font-size:16px"></i><input id="filter" placeholder="搜索"></div>
+    <div class="search"><i class="ti ti-search" style="font-size:16px"></i><input id="filter"></div>
   </div>
 
   <div class="body">
     <nav class="side" id="side"></nav>
     <section class="main">
       <div class="listhead" id="listhead">
-        <span data-sort="name">名称 <i class="ti" id="sortArrow"></i></span>
-        <span data-sort="mtime">修改日期</span><span data-sort="type">类型</span><span data-sort="size">大小</span>
+        <span data-sort="name"><span data-i18n="name">Name</span> <i class="ti" id="sortArrow"></i></span>
+        <span data-sort="mtime"><span data-i18n="dateModified">Date modified</span></span>
+        <span data-sort="type"><span data-i18n="type">Type</span></span>
+        <span data-sort="size"><span data-i18n="size">Size</span></span>
       </div>
       <div id="listView"></div>
       <div id="gridView" class="grid hidden"></div>
@@ -166,8 +169,8 @@ body{background:var(--win);color:var(--text)}
     <span id="selinfo"></span>
     <div class="spacer"></div>
     <div class="viewtoggle">
-      <div class="vbtn active" data-view="list" title="详细列表"><i class="ti ti-layout-list"></i></div>
-      <div class="vbtn" data-view="grid" title="大图标"><i class="ti ti-layout-grid"></i></div>
+      <div class="vbtn active" data-view="list" data-i18n-title="details"><i class="ti ti-layout-list"></i></div>
+      <div class="vbtn" data-view="grid" data-i18n-title="largeIcons"><i class="ti ti-layout-grid"></i></div>
     </div>
   </div>
 
@@ -177,22 +180,71 @@ body{background:var(--win);color:var(--text)}
 <script>
 const $ = (s) => document.querySelector(s);
 
-// ───────── 状态 ─────────
-let current = "";
-let home = "";
-let entries = [];
-let selName = null;
-let clipboard = null;        // { path, name, op }
-let view = "list";
-let showHidden = false;
-let filterText = "";
-let sortKey = "name", sortAsc = true;
-let hist = [], histIdx = -1;  // 历史栈
+// ───────── i18n ─────────
+const I18N = {
+  en:{
+    lang:"切换语言 / Switch language", theme:"Toggle dark / light",
+    newFolder:"New folder", sort:"Sort", view:"View", hidden:"Hidden",
+    cut:"Cut (Ctrl/Cmd+X)", copy:"Copy (Ctrl/Cmd+C)", paste:"Paste (Ctrl/Cmd+V)",
+    rename:"Rename (F2)", share:"Copy full path", del:"Delete (Delete)",
+    back:"Back", forward:"Forward", up:"Up", refresh:"Refresh",
+    name:"Name", dateModified:"Date modified", type:"Type", size:"Size",
+    details:"Details", largeIcons:"Large icons",
+    thisMac:"This Mac", searchPrefix:"Search ",
+    Home:"Home", Pictures:"Pictures", Locations:"Locations", Desktop:"Desktop",
+    Documents:"Documents", Downloads:"Downloads", Music:"Music", Movies:"Movies",
+    Applications:"Applications", Root:"Root",
+    folder:"Folder", file:"File", fileSuffix:" File",
+    fullPath:"Full path", noSelection:"No item selected", clickHint:"Click a file or folder to see details",
+    selected:"1 selected", noMatch:"No matching files", emptyFolder:"(empty folder)",
+    items:(n)=>n+" item"+(n===1?"":"s"),
+    pathCopied:"Path copied: ", copyFailed:"Copy failed",
+    cutDone:"Cut", copyDone:"Copied", moved:"Moved", created:"Created", renamed:"Renamed", deleted:"Deleted",
+    sameTarget:"Source and target are the same", failed:"Failed: ", requestFailed:"Request failed: ",
+    cannotOpen:"Cannot open: ", loadFailed:"Load failed: ",
+    showingHidden:"Showing hidden files", hidingHidden:"Hiding hidden files",
+    sortedBy:"Sorted by ", sortNames:{name:"name",mtime:"date",type:"type",size:"size"},
+    newFolderPrompt:"New folder name:", newFolderDefault:"New folder", renamePrompt:"Rename to:",
+    deleteConfirm:"Delete?", folderNote:"(entire folder and its contents)",
+  },
+  zh:{
+    lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
+    newFolder:"新建文件夹", sort:"排序", view:"查看", hidden:"显示隐藏",
+    cut:"剪切 (Ctrl/Cmd+X)", copy:"复制 (Ctrl/Cmd+C)", paste:"粘贴 (Ctrl/Cmd+V)",
+    rename:"重命名 (F2)", share:"复制完整路径", del:"删除 (Delete)",
+    back:"后退", forward:"前进", up:"向上", refresh:"刷新",
+    name:"名称", dateModified:"修改日期", type:"类型", size:"大小",
+    details:"详细列表", largeIcons:"大图标",
+    thisMac:"此电脑", searchPrefix:"搜索 ",
+    Home:"主页", Pictures:"图片", Locations:"位置", Desktop:"桌面",
+    Documents:"文稿", Downloads:"下载", Music:"音乐", Movies:"影片",
+    Applications:"应用程序", Root:"磁盘根目录",
+    folder:"文件夹", file:"文件", fileSuffix:" 文件",
+    fullPath:"完整路径", noSelection:"未选择项目", clickHint:"单击文件或文件夹查看详情",
+    selected:"已选择 1 项", noMatch:"没有匹配的文件", emptyFolder:"(空目录)",
+    items:(n)=>n+" 个项目",
+    pathCopied:"已复制路径: ", copyFailed:"复制失败",
+    cutDone:"已剪切", copyDone:"已复制", moved:"已移动", created:"已创建", renamed:"已重命名", deleted:"已删除",
+    sameTarget:"源和目标相同", failed:"失败: ", requestFailed:"请求失败: ",
+    cannotOpen:"无法打开: ", loadFailed:"加载失败: ",
+    showingHidden:"显示隐藏文件", hidingHidden:"隐藏隐藏文件",
+    sortedBy:"排序方式: ", sortNames:{name:"名称",mtime:"日期",type:"类型",size:"大小"},
+    newFolderPrompt:"新文件夹名称:", newFolderDefault:"新建文件夹", renamePrompt:"重命名为:",
+    deleteConfirm:"确定删除?", folderNote:"(整个文件夹及其内容)",
+  },
+};
+let lang = "en";
+const t = (k) => I18N[lang][k];
 
-// ───────── 工具 ─────────
+// ───────── state ─────────
+let current = "", home = "", entries = [], selName = null;
+let clipboard = null, view = "list", showHidden = false, filterText = "";
+let sortKey = "name", sortAsc = true, hist = [], histIdx = -1;
+
+// ───────── helpers ─────────
 const join = (dir, name) => (dir.endsWith("/") ? dir : dir + "/") + name;
-function basename(p){ if(p==="/"||p==="") return p; const t=p.replace(/\/+$/,""); return t.slice(t.lastIndexOf("/")+1); }
-function parentOf(p){ if(p==="/"||p==="") return p; const t=p.replace(/\/+$/,""); const i=t.lastIndexOf("/"); return i<=0?"/":t.slice(0,i); }
+function basename(p){ if(p==="/"||p==="") return p; const x=p.replace(/\/+$/,""); return x.slice(x.lastIndexOf("/")+1); }
+function parentOf(p){ if(p==="/"||p==="") return p; const x=p.replace(/\/+$/,""); const i=x.lastIndexOf("/"); return i<=0?"/":x.slice(0,i); }
 
 function fmtSize(n, isDir){
   if(isDir) return "";
@@ -203,69 +255,78 @@ function fmtSize(n, isDir){
 }
 function fmtDate(ms){
   if(!ms) return "—";
-  const d=new Date(ms); const p=(x)=>String(x).padStart(2,"0");
+  const d=new Date(ms), p=(x)=>String(x).padStart(2,"0");
   return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 function ext(name){ const i=name.lastIndexOf("."); return i<=0?"":name.slice(i+1).toLowerCase(); }
 
+// [icon, colorVar, English name, 中文 name]
 const TYPE_MAP = {
-  doc:["ti-file-text","--doc","Word 文档"], docx:["ti-file-text","--doc","Word 文档"],
-  xls:["ti-file-spreadsheet","--xls","Excel 工作表"], xlsx:["ti-file-spreadsheet","--xls","Excel 工作表"], csv:["ti-file-spreadsheet","--xls","CSV 文件"],
-  ppt:["ti-file-text","--doc","PowerPoint 演示"], pptx:["ti-file-text","--doc","PowerPoint 演示"],
-  pdf:["ti-file-typography","--pdf","PDF 文档"],
-  png:["ti-photo","--img","PNG 图像"], jpg:["ti-photo","--img","JPEG 图像"], jpeg:["ti-photo","--img","JPEG 图像"],
-  gif:["ti-photo","--img","GIF 图像"], webp:["ti-photo","--img","WebP 图像"], svg:["ti-photo","--img","SVG 图像"], bmp:["ti-photo","--img","位图图像"], heic:["ti-photo","--img","HEIC 图像"],
-  zip:["ti-file-zip","--zip","压缩文件夹"], tar:["ti-file-zip","--zip","归档文件"], gz:["ti-file-zip","--zip","压缩文件"], rar:["ti-file-zip","--zip","压缩文件"], "7z":["ti-file-zip","--zip","压缩文件"],
-  mp3:["ti-music","--aud","音频文件"], m4a:["ti-music","--aud","音频文件"], wav:["ti-music","--aud","音频文件"], flac:["ti-music","--aud","音频文件"], aac:["ti-music","--aud","音频文件"],
-  mp4:["ti-movie","--aud","视频文件"], mov:["ti-movie","--aud","视频文件"], mkv:["ti-movie","--aud","视频文件"], avi:["ti-movie","--aud","视频文件"], webm:["ti-movie","--aud","视频文件"],
-  txt:["ti-file-text","--doc","文本文档"], md:["ti-file-text","--doc","Markdown 文档"],
-  zig:["ti-file-code","--doc","Zig 源文件"], js:["ti-file-code","--doc","JavaScript 文件"], ts:["ti-file-code","--doc","TypeScript 文件"],
-  html:["ti-file-code","--doc","HTML 文件"], css:["ti-file-code","--doc","CSS 文件"], json:["ti-file-code","--doc","JSON 文件"],
-  py:["ti-file-code","--doc","Python 文件"], sh:["ti-file-code","--doc","Shell 脚本"], c:["ti-file-code","--doc","C 源文件"], rs:["ti-file-code","--doc","Rust 源文件"],
+  doc:["ti-file-text","--doc","Word Document","Word 文档"], docx:["ti-file-text","--doc","Word Document","Word 文档"],
+  xls:["ti-file-spreadsheet","--xls","Excel Spreadsheet","Excel 工作表"], xlsx:["ti-file-spreadsheet","--xls","Excel Spreadsheet","Excel 工作表"], csv:["ti-file-spreadsheet","--xls","CSV File","CSV 文件"],
+  ppt:["ti-file-text","--doc","PowerPoint Presentation","PowerPoint 演示"], pptx:["ti-file-text","--doc","PowerPoint Presentation","PowerPoint 演示"],
+  pdf:["ti-file-typography","--pdf","PDF Document","PDF 文档"],
+  png:["ti-photo","--img","PNG Image","PNG 图像"], jpg:["ti-photo","--img","JPEG Image","JPEG 图像"], jpeg:["ti-photo","--img","JPEG Image","JPEG 图像"],
+  gif:["ti-photo","--img","GIF Image","GIF 图像"], webp:["ti-photo","--img","WebP Image","WebP 图像"], svg:["ti-photo","--img","SVG Image","SVG 图像"], bmp:["ti-photo","--img","Bitmap Image","位图图像"], heic:["ti-photo","--img","HEIC Image","HEIC 图像"],
+  zip:["ti-file-zip","--zip","Compressed Folder","压缩文件夹"], tar:["ti-file-zip","--zip","Archive","归档文件"], gz:["ti-file-zip","--zip","Compressed File","压缩文件"], rar:["ti-file-zip","--zip","Compressed File","压缩文件"], "7z":["ti-file-zip","--zip","Compressed File","压缩文件"],
+  mp3:["ti-music","--aud","Audio File","音频文件"], m4a:["ti-music","--aud","Audio File","音频文件"], wav:["ti-music","--aud","Audio File","音频文件"], flac:["ti-music","--aud","Audio File","音频文件"], aac:["ti-music","--aud","Audio File","音频文件"],
+  mp4:["ti-movie","--aud","Video File","视频文件"], mov:["ti-movie","--aud","Video File","视频文件"], mkv:["ti-movie","--aud","Video File","视频文件"], avi:["ti-movie","--aud","Video File","视频文件"], webm:["ti-movie","--aud","Video File","视频文件"],
+  txt:["ti-file-text","--doc","Text Document","文本文档"], md:["ti-file-text","--doc","Markdown Document","Markdown 文档"],
+  zig:["ti-file-code","--doc","Zig Source","Zig 源文件"], js:["ti-file-code","--doc","JavaScript File","JavaScript 文件"], ts:["ti-file-code","--doc","TypeScript File","TypeScript 文件"],
+  html:["ti-file-code","--doc","HTML File","HTML 文件"], css:["ti-file-code","--doc","CSS File","CSS 文件"], json:["ti-file-code","--doc","JSON File","JSON 文件"],
+  py:["ti-file-code","--doc","Python File","Python 文件"], sh:["ti-file-code","--doc","Shell Script","Shell 脚本"], c:["ti-file-code","--doc","C Source","C 源文件"], rs:["ti-file-code","--doc","Rust Source","Rust 源文件"],
 };
 function meta(e){
-  if(e.kind==="directory") return {ic:"ti-folder", col:"--folder", tl:"文件夹"};
+  if(e.kind==="directory") return {ic:"ti-folder", col:"--folder", tl:t("folder")};
   const m=TYPE_MAP[ext(e.name)];
-  if(m) return {ic:m[0], col:m[1], tl:m[2]};
+  if(m) return {ic:m[0], col:m[1], tl:(lang==="en"?m[2]:m[3])};
   const ex=ext(e.name);
-  return {ic:"ti-file", col:"--faint", tl: ex ? ex.toUpperCase()+" 文件" : "文件"};
+  return {ic:"ti-file", col:"--faint", tl: ex ? ex.toUpperCase()+t("fileSuffix") : t("file")};
 }
 
 function toast(msg, bad){
-  const t=$("#toast"); t.textContent=msg; t.className="toast show"+(bad?" bad":"");
-  setTimeout(()=>t.className="toast",1600);
+  const el=$("#toast"); el.textContent=msg; el.className="toast show"+(bad?" bad":"");
+  setTimeout(()=>el.className="toast",1600);
 }
 async function copyText(text){
-  try{ await navigator.clipboard.writeText(text); toast("已复制路径: "+text); }
-  catch{ toast("复制失败",true); }
+  try{ await navigator.clipboard.writeText(text); toast(t("pathCopied")+text); }
+  catch{ toast(t("copyFailed"),true); }
 }
 
-// ───────── 侧边栏 ─────────
+// ───────── apply static i18n ─────────
+function applyStatic(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-title]").forEach(el=>el.title=t(el.dataset.i18nTitle));
+  $("#langBtn").textContent = lang==="en" ? "中" : "EN";
+  document.documentElement.lang = lang==="en" ? "en" : "zh-CN";
+}
+
+// ───────── sidebar ─────────
 function buildSide(){
   const places=[
-    {label:"主页", icon:"ti-home", path:home, col:"--accent"},
-    {label:"图片", icon:"ti-photo", path:join(home,"Pictures"), col:"--accent"},
-    {sect:"位置"},
-    {label:"桌面", icon:"ti-device-imac", path:join(home,"Desktop"), col:"--accent"},
-    {label:"文稿", icon:"ti-folder", path:join(home,"Documents"), col:"--folder"},
-    {label:"下载", icon:"ti-download", path:join(home,"Downloads"), col:"--accent"},
-    {label:"音乐", icon:"ti-music", path:join(home,"Music"), col:"--accent"},
-    {label:"影片", icon:"ti-movie", path:join(home,"Movies"), col:"--accent"},
-    {label:"应用程序", icon:"ti-apps", path:"/Applications", col:"--accent"},
-    {label:"磁盘根目录", icon:"ti-database", path:"/", col:"--accent"},
+    {k:"Home", icon:"ti-home", path:home, col:"--accent"},
+    {k:"Pictures", icon:"ti-photo", path:join(home,"Pictures"), col:"--accent"},
+    {sect:"Locations"},
+    {k:"Desktop", icon:"ti-device-imac", path:join(home,"Desktop"), col:"--accent"},
+    {k:"Documents", icon:"ti-folder", path:join(home,"Documents"), col:"--folder"},
+    {k:"Downloads", icon:"ti-download", path:join(home,"Downloads"), col:"--accent"},
+    {k:"Music", icon:"ti-music", path:join(home,"Music"), col:"--accent"},
+    {k:"Movies", icon:"ti-movie", path:join(home,"Movies"), col:"--accent"},
+    {k:"Applications", icon:"ti-apps", path:"/Applications", col:"--accent"},
+    {k:"Root", icon:"ti-database", path:"/", col:"--accent"},
   ];
   const side=$("#side"); side.innerHTML="";
   for(const p of places){
-    if(p.sect){ const s=document.createElement("div"); s.className="sectlabel"; s.textContent=p.sect; side.appendChild(s); continue; }
+    if(p.sect){ const s=document.createElement("div"); s.className="sectlabel"; s.textContent=t(p.sect); side.appendChild(s); continue; }
     const n=document.createElement("div");
     n.className="snode"+(current===p.path?" active":"");
-    n.innerHTML=`<i class="ti ${p.icon} lead" style="color:var(${p.col})"></i>${p.label}`;
+    n.innerHTML=`<i class="ti ${p.icon} lead" style="color:var(${p.col})"></i>${t(p.k)}`;
     n.onclick=()=>load(p.path);
     side.appendChild(n);
   }
 }
 
-// ───────── 面包屑 ─────────
+// ───────── breadcrumbs ─────────
 function buildCrumbs(){
   const c=$("#crumbs"); c.innerHTML="";
   const mk=(label,path,cur,icon)=>{
@@ -275,12 +336,12 @@ function buildCrumbs(){
   };
   const chev=()=>{ const i=document.createElement("i"); i.className="ti ti-chevron-right"; i.style.cssText="color:var(--faint);font-size:13px"; return i; };
   const parts=current.split("/").filter(Boolean);
-  c.appendChild(mk("此电脑","/",parts.length===0,"ti-device-desktop"));
+  c.appendChild(mk(t("thisMac"),"/",parts.length===0,"ti-device-desktop"));
   let acc="";
   parts.forEach((p,i)=>{ acc+="/"+p; c.appendChild(chev()); c.appendChild(mk(p,acc,i===parts.length-1)); });
 }
 
-// ───────── 过滤 + 排序 ─────────
+// ───────── filter + sort ─────────
 function visible(){
   const q=filterText.trim().toLowerCase();
   let list=entries.filter(e=>{
@@ -289,7 +350,7 @@ function visible(){
     return true;
   });
   list.sort((a,b)=>{
-    if(a.kind!==b.kind) return a.kind==="directory"?-1:1; // 目录永远在前
+    if(a.kind!==b.kind) return a.kind==="directory"?-1:1; // folders always first
     let r=0;
     if(sortKey==="name") r=a.name.localeCompare(b.name);
     else if(sortKey==="size") r=a.size-b.size;
@@ -300,12 +361,12 @@ function visible(){
   return list;
 }
 
-// ───────── 渲染 ─────────
+// ───────── render ─────────
 function render(){
   const list=visible();
   const lv=$("#listView"), gv=$("#gridView");
   if(list.length===0){
-    const msg=filterText?"没有匹配的文件":"(空目录)";
+    const msg=filterText?t("noMatch"):t("emptyFolder");
     lv.innerHTML=`<div class="empty">${msg}</div>`; gv.innerHTML=`<div class="empty">${msg}</div>`;
   } else if(view==="list"){
     lv.innerHTML=list.map(e=>{
@@ -331,8 +392,8 @@ function render(){
   gv.classList.toggle("hidden",view!=="grid");
   $("#listhead").classList.toggle("hidden",view!=="list");
   $("#sortArrow").className="ti "+(sortKey==="name"?(sortAsc?"ti-chevron-up":"ti-chevron-down"):"");
-  $("#count").textContent=list.length+" 个项目";
-  $("#selinfo").textContent=selName?"已选择 1 项":"";
+  $("#count").textContent=t("items")(list.length);
+  $("#selinfo").textContent=selName?t("selected"):"";
   renderDetails();
   updateButtons();
 }
@@ -346,14 +407,13 @@ function bindRows(container,sel){
   });
 }
 function renderDetails(){
-  const d=$("#details");
-  const e=entries.find(x=>x.name===selName);
-  if(!e){ d.innerHTML=`<div class="dempty">未选择项目<br>单击文件或文件夹查看详情</div>`; return; }
+  const d=$("#details"), e=entries.find(x=>x.name===selName);
+  if(!e){ d.innerHTML=`<div class="dempty">${t("noSelection")}<br>${t("clickHint")}</div>`; return; }
   const m=meta(e);
-  let rows=`<div class="drow"><span class="k">类型</span><span class="v">${m.tl}</span></div>`;
-  rows+=`<div class="drow"><span class="k">修改日期</span><span class="v">${fmtDate(e.mtime)}</span></div>`;
-  if(e.kind!=="directory") rows+=`<div class="drow"><span class="k">大小</span><span class="v">${fmtSize(e.size,false)}</span></div>`;
-  rows+=`<div class="drow"><span class="k">完整路径</span><span class="v">${escapeHtml(join(current,e.name))}</span></div>`;
+  let rows=`<div class="drow"><span class="k">${t("type")}</span><span class="v">${m.tl}</span></div>`;
+  rows+=`<div class="drow"><span class="k">${t("dateModified")}</span><span class="v">${fmtDate(e.mtime)}</span></div>`;
+  if(e.kind!=="directory") rows+=`<div class="drow"><span class="k">${t("size")}</span><span class="v">${fmtSize(e.size,false)}</span></div>`;
+  rows+=`<div class="drow"><span class="k">${t("fullPath")}</span><span class="v">${escapeHtml(join(current,e.name))}</span></div>`;
   d.innerHTML=`<div class="preview"><i class="ti ${m.ic}" style="color:var(${m.col})"></i></div>
     <div class="dname">${escapeHtml(e.name)}</div><div class="dtype">${m.tl}</div>${rows}`;
 }
@@ -363,65 +423,66 @@ function updateButtons(){
   $("#pasteBtn").classList.toggle("disabled",!clipboard);
   $("#hiddenBtn").classList.toggle("on",showHidden);
 }
+function setSearchPlaceholder(){ $("#filter").placeholder=t("searchPrefix")+(basename(current)||"/"); }
 
-// ───────── 加载 / 导航 ─────────
+// ───────── load / navigation ─────────
 async function load(path, fromHist){
   try{
     const res=await fetch("/api/list?path="+encodeURIComponent(path));
     const data=await res.json();
-    if(data.error){ toast("无法打开: "+data.error,true); return; }
+    if(data.error){ toast(t("cannotOpen")+data.error,true); return; }
     current=data.path; home=data.home||home; entries=data.entries;
     selName=null; filterText=""; $("#filter").value="";
     if(!fromHist){ hist=hist.slice(0,histIdx+1); hist.push(current); histIdx=hist.length-1; }
     $("#tabName").textContent=basename(current)||"/";
-    $("#filter").placeholder="搜索 "+(basename(current)||"/");
+    setSearchPlaceholder();
     buildSide(); buildCrumbs(); render(); updateNav();
     $(".main").scrollTop=0;
-  }catch(err){ toast("加载失败: "+err,true); }
+  }catch(err){ toast(t("loadFailed")+err,true); }
 }
 function updateNav(){
   $("#backBtn").classList.toggle("disabled",histIdx<=0);
   $("#fwdBtn").classList.toggle("disabled",histIdx>=hist.length-1);
 }
 
-// ───────── POST 封装 ─────────
+// ───────── POST wrapper ─────────
 async function api(url, okMsg){
   try{
     const res=await fetch(url,{method:"POST"});
     const data=await res.json();
-    if(data.error){ toast("失败: "+data.error,true); return false; }
+    if(data.error){ toast(t("failed")+data.error,true); return false; }
     if(okMsg) toast(okMsg); return true;
-  }catch(err){ toast("请求失败: "+err,true); return false; }
+  }catch(err){ toast(t("requestFailed")+err,true); return false; }
 }
 
-// ───────── 文件操作 ─────────
+// ───────── file operations ─────────
 const selEntry=()=>entries.find(x=>x.name===selName);
 async function doMkdir(){
-  const name=prompt("新文件夹名称:","新建文件夹"); if(!name) return;
-  if(await api("/api/mkdir?path="+encodeURIComponent(join(current,name)),"已创建")) load(current,true);
+  const name=prompt(t("newFolderPrompt"),t("newFolderDefault")); if(!name) return;
+  if(await api("/api/mkdir?path="+encodeURIComponent(join(current,name)),t("created"))) load(current,true);
 }
-function doCut(){ const e=selEntry(); if(!e) return; clipboard={path:join(current,e.name),name:e.name,op:"cut"}; toast("已剪切"); render(); }
-function doCopy(){ const e=selEntry(); if(!e) return; clipboard={path:join(current,e.name),name:e.name,op:"copy"}; toast("已复制"); render(); }
+function doCut(){ const e=selEntry(); if(!e) return; clipboard={path:join(current,e.name),name:e.name,op:"cut"}; toast(t("cutDone")); render(); }
+function doCopy(){ const e=selEntry(); if(!e) return; clipboard={path:join(current,e.name),name:e.name,op:"copy"}; toast(t("copyDone")); render(); }
 async function doPaste(){
   if(!clipboard) return;
   const dest=join(current,clipboard.name);
-  if(dest===clipboard.path){ toast("源和目标相同",true); return; }
+  if(dest===clipboard.path){ toast(t("sameTarget"),true); return; }
   const u=(clipboard.op==="cut"?"/api/move":"/api/copy")+"?from="+encodeURIComponent(clipboard.path)+"&to="+encodeURIComponent(dest);
-  if(await api(u,clipboard.op==="cut"?"已移动":"已复制")){ if(clipboard.op==="cut") clipboard=null; load(current,true); }
+  if(await api(u,clipboard.op==="cut"?t("moved"):t("copyDone"))){ if(clipboard.op==="cut") clipboard=null; load(current,true); }
 }
 async function doRename(){
   const e=selEntry(); if(!e) return;
-  const name=prompt("重命名为:",e.name); if(!name||name===e.name) return;
-  if(await api("/api/move?from="+encodeURIComponent(join(current,e.name))+"&to="+encodeURIComponent(join(current,name)),"已重命名")) load(current,true);
+  const name=prompt(t("renamePrompt"),e.name); if(!name||name===e.name) return;
+  if(await api("/api/move?from="+encodeURIComponent(join(current,e.name))+"&to="+encodeURIComponent(join(current,name)),t("renamed"))) load(current,true);
 }
 async function doDelete(){
   const e=selEntry(); if(!e) return;
-  if(!confirm("确定删除?\n\n"+join(current,e.name)+(e.kind==="directory"?"\n\n(整个文件夹及其内容)":""))) return;
+  if(!confirm(t("deleteConfirm")+"\n\n"+join(current,e.name)+(e.kind==="directory"?"\n\n"+t("folderNote"):""))) return;
   const p=join(current,e.name);
-  if(await api("/api/delete?path="+encodeURIComponent(p),"已删除")){ if(clipboard&&clipboard.path===p) clipboard=null; load(current,true); }
+  if(await api("/api/delete?path="+encodeURIComponent(p),t("deleted"))){ if(clipboard&&clipboard.path===p) clipboard=null; load(current,true); }
 }
 
-// ───────── 事件绑定 ─────────
+// ───────── event bindings ─────────
 $("#mkdirBtn").onclick=doMkdir;
 $("#cutBtn").onclick=doCut;
 $("#copyBtn").onclick=doCopy;
@@ -436,11 +497,11 @@ $("#upBtn").onclick=()=>load(parentOf(current));
 $("#refreshBtn").onclick=()=>load(current,true);
 
 $("#filter").addEventListener("input",e=>{ filterText=e.target.value; render(); });
-$("#hiddenBtn").onclick=()=>{ showHidden=!showHidden; render(); toast(showHidden?"显示隐藏文件":"隐藏隐藏文件"); };
+$("#hiddenBtn").onclick=()=>{ showHidden=!showHidden; render(); toast(showHidden?t("showingHidden"):t("hidingHidden")); };
 $("#viewMenu").onclick=()=>setView(view==="list"?"grid":"list");
-$("#sortBtn").onclick=()=>{ const keys=["name","mtime","type","size"]; sortKey=keys[(keys.indexOf(sortKey)+1)%keys.length]; render(); toast("按"+({name:"名称",mtime:"日期",type:"类型",size:"大小"}[sortKey])+"排序"); };
+$("#sortBtn").onclick=()=>{ const keys=["name","mtime","type","size"]; sortKey=keys[(keys.indexOf(sortKey)+1)%keys.length]; render(); toast(t("sortedBy")+t("sortNames")[sortKey]); };
 
-document.querySelectorAll(".listhead span").forEach(s=>s.onclick=()=>{
+document.querySelectorAll(".listhead span[data-sort]").forEach(s=>s.onclick=()=>{
   const k=s.dataset.sort; if(k===sortKey) sortAsc=!sortAsc; else { sortKey=k; sortAsc=true; } render();
 });
 document.querySelectorAll(".vbtn").forEach(b=>b.onclick=()=>setView(b.dataset.view));
@@ -450,16 +511,25 @@ function setView(v){
   render();
 }
 
-// 主题
+// language switch (persisted, like the theme toggle)
+function applyLang(l){
+  lang = (l==="zh"?"zh":"en");
+  try{ localStorage.setItem("fm-lang",lang); }catch{}
+  applyStatic(); setSearchPlaceholder(); buildSide(); buildCrumbs(); render();
+}
+$("#langBtn").onclick=()=>applyLang(lang==="en"?"zh":"en");
+(function(){ let l="en"; try{ l=localStorage.getItem("fm-lang")||"en"; }catch{} lang=(l==="zh"?"zh":"en"); })();
+
+// theme (persisted)
 function applyTheme(dark){
   document.documentElement.classList.toggle("dark",dark);
   $("#themeBtn").querySelector("i").className="ti "+(dark?"ti-sun":"ti-moon");
   try{ localStorage.setItem("fm-theme",dark?"dark":"light"); }catch{}
 }
 $("#themeBtn").onclick=()=>applyTheme(!document.documentElement.classList.contains("dark"));
-(function(){ let t="light"; try{ t=localStorage.getItem("fm-theme")||"light"; }catch{} applyTheme(t==="dark"); })();
+(function(){ let th="light"; try{ th=localStorage.getItem("fm-theme")||"light"; }catch{} applyTheme(th==="dark"); })();
 
-// 键盘快捷键
+// keyboard shortcuts
 document.addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT"){ if(e.key==="Escape"){ e.target.value=""; filterText=""; render(); e.target.blur(); } return; }
   const mod=e.metaKey||e.ctrlKey;
@@ -471,6 +541,8 @@ document.addEventListener("keydown",e=>{
   else if(e.key==="Enter"&&selName){ const en=selEntry(); if(en&&en.kind==="directory") load(join(current,en.name)); }
 });
 
+// init
+applyStatic();
 load("");
 </script>
 </body>
