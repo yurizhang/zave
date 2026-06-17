@@ -1,6 +1,6 @@
 # window-finder
 
-A lightweight local file manager written in **Zig 0.16**. The backend is a pure-Zig HTTP server; the frontend is a browser UI.
+**v1.0** · A lightweight local file manager written in **Zig 0.16**. The backend is a pure-Zig HTTP server; the frontend is a Windows 11-style browser UI.
 
 > 🇨🇳 中文文档请看 [README.zh.md](README.zh.md)
 
@@ -196,4 +196,4 @@ Each request uses an **ArenaAllocator** that is freed as a whole when the reques
 
 ## 📄 License
 
-Personal learning project — use freely.
+[MIT](LICENSE) © 2026 Yong Zhang

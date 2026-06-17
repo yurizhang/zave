@@ -1,6 +1,6 @@
 # window-finder
 
-一个用 **Zig 0.16** 写的轻量级本地文件管理器,后端是纯 Zig 实现的 HTTP 服务,前端是浏览器界面。
+**v1.0** · 一个用 **Zig 0.16** 写的轻量级本地文件管理器,后端是纯 Zig 实现的 HTTP 服务,前端是 Windows 11 风格的浏览器界面。
 
 > 🇬🇧 For English, see [README.md](README.md)
 
@@ -196,4 +196,4 @@ while (try it.next(io)) |entry| { ... }
 
 ## 📄 License
 
-个人学习项目,随意使用。
+[MIT](LICENSE) © 2026 Yong Zhang

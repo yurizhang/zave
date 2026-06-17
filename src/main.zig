@@ -4,8 +4,16 @@ const net = std.Io.net;
 const http = std.http;
 
 const index_html = @embedFile("index.html");
+const tabler_css = @embedFile("assets/tabler-icons.min.css");
+const tabler_woff2 = @embedFile("assets/fonts/tabler-icons.woff2");
 
 const port: u16 = 8080;
+
+/// 读取 $HOME；读不到时退回 "/"。
+fn homeDir() []const u8 {
+    if (std.c.getenv("HOME")) |h| return std.mem.span(h);
+    return "/";
+}
 
 const json_ct: []const http.Header = &.{.{ .name = "content-type", .value = "application/json; charset=utf-8" }};
 
@@ -58,6 +66,23 @@ fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     if (std.mem.startsWith(u8, target, "/api/delete")) return handleDelete(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/mkdir")) return handleMkdir(io, gpa, req, target);
 
+    if (std.mem.startsWith(u8, target, "/assets/fonts/tabler-icons.woff2")) {
+        return req.respond(tabler_woff2, .{
+            .extra_headers = &.{
+                .{ .name = "content-type", .value = "font/woff2" },
+                .{ .name = "cache-control", .value = "max-age=86400" },
+            },
+        });
+    }
+    if (std.mem.startsWith(u8, target, "/assets/tabler-icons.min.css")) {
+        return req.respond(tabler_css, .{
+            .extra_headers = &.{
+                .{ .name = "content-type", .value = "text/css; charset=utf-8" },
+                .{ .name = "cache-control", .value = "max-age=86400" },
+            },
+        });
+    }
+
     try req.respond(index_html, .{
         .extra_headers = &.{.{ .name = "content-type", .value = "text/html; charset=utf-8" }},
     });
@@ -72,7 +97,7 @@ fn handleList(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target:
 
     const raw_path = queryParam(target, "path") orelse "";
     const decoded = try percentDecode(arena, raw_path);
-    const path = if (decoded.len == 0) "/" else decoded;
+    const path = if (decoded.len == 0) homeDir() else decoded;
 
     const json = buildListing(io, arena, path) catch |err| blk: {
         var aw = std.Io.Writer.Allocating.init(arena);
@@ -92,6 +117,8 @@ fn buildListing(io: Io, arena: std.mem.Allocator, path: []const u8) ![]u8 {
 
     try w.writeAll("{\"path\":");
     try writeJsonString(w, path);
+    try w.writeAll(",\"home\":");
+    try writeJsonString(w, homeDir());
     try w.writeAll(",\"entries\":[");
 
     var it = dir.iterate();
@@ -101,16 +128,16 @@ fn buildListing(io: Io, arena: std.mem.Allocator, path: []const u8) ![]u8 {
         first = false;
 
         const is_dir = entry.kind == .directory;
-        const size: u64 = if (is_dir) 0 else blk: {
-            const st = dir.statFile(io, entry.name, .{}) catch break :blk 0;
-            break :blk st.size;
-        };
+        const st: ?Io.Dir.Stat = dir.statFile(io, entry.name, .{}) catch null;
+        const size: u64 = if (is_dir) 0 else if (st) |s| s.size else 0;
+        const mtime_ms: i64 = if (st) |s| s.mtime.toMilliseconds() else 0;
 
         try w.writeAll("{\"name\":");
         try writeJsonString(w, entry.name);
-        try w.print(",\"kind\":\"{s}\",\"size\":{d}}}", .{
+        try w.print(",\"kind\":\"{s}\",\"size\":{d},\"mtime\":{d}}}", .{
             if (is_dir) "directory" else "file",
             size,
+            mtime_ms,
         });
     }
 
