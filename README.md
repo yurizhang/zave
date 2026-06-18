@@ -24,6 +24,7 @@ The motivation is simple: macOS Finder is awkward — you can't see the full pat
 | ✏️ Rename | Rename a file or folder (in-place move) |
 | 🗑️ Delete | Delete a file or an entire directory tree (with a confirmation dialog) |
 | 🗜️ Zip / Unzip | Compress any item to a ZIP, or extract a ZIP in place (via `zip`/`unzip`) |
+| ☑️ Multi-select | Ctrl/Cmd-click, Shift-click range, Ctrl/Cmd+A; batch cut/copy/paste, delete and drag |
 | 👁️‍🗨️ Preview | Inline preview of text/code & images in the details panel; everything else gets an "Open with default app" button (macOS `open`) |
 | 👁️ Hidden files | Toggle to show/hide dot-files |
 | 🔍 Search | Live filter of the current directory by filename |
@@ -199,6 +200,7 @@ Each request uses an **ArenaAllocator** that is freed as a whole when the reques
 - [x] PDF inline preview (`<iframe>` embed)
 - [x] Right-click context menu
 - [x] Compress / extract ZIP
+- [x] Multi-select (Ctrl/Shift click) with batch operations
 - [x] Multiple tabs (independent directories)
 - [x] Drag-and-drop to move
 - [x] Finer file-type icons

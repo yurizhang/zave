@@ -237,6 +237,7 @@ const I18N = {
     mOpen:"Open", mCut:"Cut", mCopy:"Copy", mPaste:"Paste", mRename:"Rename", mDelete:"Delete", mCopyPath:"Copy path", mNewFolder:"New folder", mRefresh:"Refresh",
     newTabTitle:"New tab", mOpenNewTab:"Open in new tab",
     mZip:"Compress to ZIP", mUnzip:"Extract here", zipped:"Compressed", unzipped:"Extracted",
+    selectedN:(n)=>n+" selected", deleteN:(n)=>"Delete "+n+" items?", itemsSelected:(n)=>n+" items selected", total:"Total size",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -266,6 +267,7 @@ const I18N = {
     mOpen:"打开", mCut:"剪切", mCopy:"复制", mPaste:"粘贴", mRename:"重命名", mDelete:"删除", mCopyPath:"复制路径", mNewFolder:"新建文件夹", mRefresh:"刷新",
     newTabTitle:"新建标签页", mOpenNewTab:"在新标签页打开",
     mZip:"压缩为 ZIP", mUnzip:"解压到此处", zipped:"已压缩", unzipped:"已解压",
+    selectedN:(n)=>"已选择 "+n+" 项", deleteN:(n)=>"删除 "+n+" 个项目?", itemsSelected:(n)=>"已选择 "+n+" 项", total:"总大小",
   },
 };
 let lang = "en";
@@ -276,7 +278,8 @@ let current = "", home = "", entries = [], selName = null;
 let clipboard = null, view = "list", showHidden = false, filterText = "";
 let sortKey = "name", sortAsc = true, hist = [], histIdx = -1;
 let tabs = [], active = 0;   // each tab: {current, hist, histIdx, selName, entries, filterText}
-let dragSrc = null;          // full path of the item being dragged
+let selSet = new Set();      // names selected in the current dir (multi-select)
+let dragItems = [];          // full paths being dragged
 
 // ───────── helpers ─────────
 const join = (dir, name) => (dir.endsWith("/") ? dir : dir + "/") + name;
@@ -426,6 +429,20 @@ function visible(){
   return list;
 }
 
+// ───────── selection (multi) ─────────
+// selName = anchor (focus); selSet = all selected names in current dir
+function singleSel(name){ selSet=new Set([name]); selName=name; }
+function toggleSel(name){ if(selSet.has(name)) selSet.delete(name); else selSet.add(name); selName = selSet.has(name) ? name : ([...selSet].pop()||null); }
+function rangeSel(name){
+  const list=visible().map(e=>e.name);
+  const a=list.indexOf(selName), b=list.indexOf(name);
+  if(a===-1){ singleSel(name); return; }
+  const [lo,hi]=a<b?[a,b]:[b,a];
+  selSet=new Set(list.slice(lo,hi+1));   // anchor (selName) stays the origin
+}
+function selectAll(){ const l=visible(); selSet=new Set(l.map(e=>e.name)); selName=l.length?l[l.length-1].name:null; render(); }
+function selPaths(){ return [...selSet].map(n=>join(current,n)); }
+
 // ───────── render ─────────
 function render(){
   const list=visible();
@@ -436,8 +453,8 @@ function render(){
   } else if(view==="list"){
     lv.innerHTML=list.map(e=>{
       const m=meta(e), full=join(current,e.name);
-      const isCut=clipboard&&clipboard.op==="cut"&&clipboard.path===full;
-      return `<div class="row ${e.name===selName?'sel':''} ${isCut?'cut':''}" data-n="${encodeURIComponent(e.name)}">
+      const isCut=clipboard&&clipboard.op==="cut"&&clipboard.items.some(it=>it.path===full);
+      return `<div class="row ${selSet.has(e.name)?'sel':''} ${isCut?'cut':''}" data-n="${encodeURIComponent(e.name)}">
         <div class="nm"><i class="ti ${m.ic}" style="color:${m.col}"></i><span>${escapeHtml(e.name)}</span></div>
         <div class="c">${fmtDate(e.mtime)}</div><div class="c">${m.tl}</div><div class="c">${fmtSize(e.size,e.kind==='directory')||'—'}</div>
       </div>`;
@@ -446,8 +463,8 @@ function render(){
   } else {
     gv.innerHTML=list.map(e=>{
       const m=meta(e), full=join(current,e.name);
-      const isCut=clipboard&&clipboard.op==="cut"&&clipboard.path===full;
-      return `<div class="cell ${e.name===selName?'sel':''} ${isCut?'cut':''}" data-n="${encodeURIComponent(e.name)}">
+      const isCut=clipboard&&clipboard.op==="cut"&&clipboard.items.some(it=>it.path===full);
+      return `<div class="cell ${selSet.has(e.name)?'sel':''} ${isCut?'cut':''}" data-n="${encodeURIComponent(e.name)}">
         <i class="ti ${m.ic}" style="color:${m.col}"></i><div class="label">${escapeHtml(e.name)}</div>
       </div>`;
     }).join("");
@@ -458,7 +475,7 @@ function render(){
   $("#listhead").classList.toggle("hidden",view!=="list");
   $("#sortArrow").className="ti "+(sortKey==="name"?(sortAsc?"ti-chevron-up":"ti-chevron-down"):"");
   $("#count").textContent=t("items")(list.length);
-  $("#selinfo").textContent=selName?t("selected"):"";
+  $("#selinfo").textContent=selSet.size?t("selectedN")(selSet.size):"";
   renderDetails();
   updateButtons();
 }
@@ -468,19 +485,37 @@ function bindRows(container,sel){
     const name=decodeURIComponent(el.dataset.n);
     const e=entries.find(x=>x.name===name);
     const full=join(current,name);
-    el.onclick=()=>{ selName=name; render(); };
+    el.onclick=(ev)=>{
+      if(ev.metaKey||ev.ctrlKey) toggleSel(name);
+      else if(ev.shiftKey) rangeSel(name);
+      else singleSel(name);
+      render();
+    };
     el.ondblclick=()=>{ if(e.kind==="directory") load(full); else copyText(full); };
-    el.oncontextmenu=(ev)=>{ ev.preventDefault(); ev.stopPropagation(); selName=name; render(); itemMenu(ev.clientX,ev.clientY,e); };
-    // draggable source
+    el.oncontextmenu=(ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(!selSet.has(name)) singleSel(name); else selName=name; render(); itemMenu(ev.clientX,ev.clientY,e); };
+    // draggable source — drags the whole selection if this item is part of it
     el.draggable=true;
-    el.ondragstart=(ev)=>{ dragSrc=full; ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",full); };
-    el.ondragend=()=>{ dragSrc=null; document.querySelectorAll(".drop").forEach(x=>x.classList.remove("drop")); };
+    el.ondragstart=(ev)=>{ if(!selSet.has(name)){ singleSel(name); render(); } dragItems=selPaths(); ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",dragItems.join("\n")); };
+    el.ondragend=()=>{ dragItems=[]; document.querySelectorAll(".drop").forEach(x=>x.classList.remove("drop")); };
     // folders are drop targets
     if(e.kind==="directory") makeDropTarget(el,full);
   });
 }
 function renderDetails(){
-  const d=$("#details"), e=entries.find(x=>x.name===selName);
+  const d=$("#details");
+  if(selSet.size>1){
+    const items=[...selSet].map(n=>entries.find(x=>x.name===n)).filter(Boolean);
+    const folders=items.filter(x=>x.kind==="directory").length;
+    const files=items.filter(x=>x.kind!=="directory");
+    const total=files.reduce((s,x)=>s+x.size,0);
+    let rows=`<div class="drow"><span class="k">${t("items")(items.length)}</span><span class="v">${folders} 📁 / ${files.length} 📄</span></div>`;
+    rows+=`<div class="drow"><span class="k">${t("total")}</span><span class="v">${fmtSize(total,false)}</span></div>`;
+    d.innerHTML=`<div class="preview"><i class="ti ti-files" style="color:var(--accent)"></i></div>
+      <div class="dname">${t("itemsSelected")(items.length)}</div><div class="dtype">&nbsp;</div>${rows}`;
+    return;
+  }
+  const an=selName||(selSet.size===1?[...selSet][0]:null);
+  const e=entries.find(x=>x.name===an);
   if(!e){ d.innerHTML=`<div class="dempty">${t("noSelection")}<br>${t("clickHint")}</div>`; return; }
   const m=meta(e), full=join(current,e.name), ex=ext(e.name), isFile=e.kind!=="directory";
   const url="/api/file?path="+encodeURIComponent(full);
@@ -512,7 +547,7 @@ function renderDetails(){
   if(fillText){
     const box=$("#textPrev"); const want=full;
     fetch(url).then(r=>r.text()).then(txt=>{
-      if(selName!==e.name || join(current,selName)!==want) return; // selection changed
+      if(selSet.size!==1 || !selSet.has(e.name) || join(current,e.name)!==want) return; // selection changed
       if(!box.isConnected) return;
       const clipped=txt.length>20000;
       const pre=document.createElement("pre");
@@ -534,19 +569,25 @@ function validDrop(src,destDir){
   if(join(destDir,basename(src))===src) return false; // already in that folder
   return true;
 }
-async function doDrop(src,destDir){
-  if(!validDrop(src,destDir)) return;
-  const dest=join(destDir,basename(src));
-  if(await api("/api/move?from="+encodeURIComponent(src)+"&to="+encodeURIComponent(dest),t("moved"))){
-    if(clipboard&&clipboard.path===src) clipboard=null;
-    load(current,true);
+function canDropAny(destDir){ return dragItems.length>0 && dragItems.some(src=>validDrop(src,destDir)); }
+async function doDrop(destDir){
+  const srcs=dragItems.filter(src=>validDrop(src,destDir));
+  if(!srcs.length) return;
+  let ok=0;
+  for(const src of srcs){
+    const dest=join(destDir,basename(src));
+    const res=await fetch("/api/move?from="+encodeURIComponent(src)+"&to="+encodeURIComponent(dest),{method:"POST"});
+    const d=await res.json(); if(!d.error) ok++;
   }
+  clipboard=null;
+  toast(t("moved")+(srcs.length>1?` (${ok})`:""));
+  load(current,true);
 }
 // attach drop behaviour to any element that represents a target folder
 function makeDropTarget(el,destDir){
-  el.ondragover=(ev)=>{ if(validDrop(dragSrc,destDir)){ ev.preventDefault(); ev.dataTransfer.dropEffect="move"; el.classList.add("drop"); } };
+  el.ondragover=(ev)=>{ if(canDropAny(destDir)){ ev.preventDefault(); ev.dataTransfer.dropEffect="move"; el.classList.add("drop"); } };
   el.ondragleave=()=>el.classList.remove("drop");
-  el.ondrop=(ev)=>{ ev.preventDefault(); el.classList.remove("drop"); doDrop(dragSrc,destDir); };
+  el.ondrop=(ev)=>{ ev.preventDefault(); el.classList.remove("drop"); doDrop(destDir); };
 }
 
 // ───────── context menu ─────────
@@ -594,15 +635,16 @@ function bgMenu(x,y){
   ]);
 }
 function updateButtons(){
-  const has=!!selName;
-  ["cutBtn","copyBtn","renameBtn","delBtn","shareBtn"].forEach(id=>$("#"+id).classList.toggle("disabled",!has));
+  const has=selSet.size>0, single=selSet.size===1;
+  ["cutBtn","copyBtn","delBtn"].forEach(id=>$("#"+id).classList.toggle("disabled",!has));
+  ["renameBtn","shareBtn"].forEach(id=>$("#"+id).classList.toggle("disabled",!single));
   $("#pasteBtn").classList.toggle("disabled",!clipboard);
   $("#hiddenBtn").classList.toggle("on",showHidden);
 }
 function setSearchPlaceholder(){ $("#filter").placeholder=t("searchPrefix")+(basename(current)||"/"); }
 
-// move selection with the keyboard; delta=±1, or "first"/"last"
-function moveSel(delta){
+// move selection with the keyboard; delta=±1, or "first"/"last"; extend grows selSet
+function moveSel(delta, extend){
   const list=visible();
   if(list.length===0) return;
   let idx=list.findIndex(e=>e.name===selName);
@@ -610,7 +652,8 @@ function moveSel(delta){
   else if(delta==="last") idx=list.length-1;
   else if(idx===-1) idx = delta>0 ? 0 : list.length-1;
   else idx = Math.max(0, Math.min(list.length-1, idx+delta));
-  selName=list[idx].name;
+  const name=list[idx].name;
+  if(extend){ selSet.add(name); selName=name; } else { singleSel(name); }
   render();
   const el=document.querySelector((view==="list"?"#listView":"#gridView")+" .sel");
   if(el) el.scrollIntoView({block:"nearest"});
@@ -623,7 +666,7 @@ async function load(path, fromHist){
     const data=await res.json();
     if(data.error){ toast(t("cannotOpen")+data.error,true); return; }
     current=data.path; home=data.home||home; entries=data.entries;
-    selName=null; filterText=""; $("#filter").value="";
+    selName=null; selSet=new Set(); filterText=""; $("#filter").value="";
     if(!fromHist){ hist=hist.slice(0,histIdx+1); hist.push(current); histIdx=hist.length-1; }
     setSearchPlaceholder();
     buildSide(); buildCrumbs(); renderTabbar(); render(); updateNav();
@@ -653,11 +696,11 @@ function renderTabbar(){
   });
 }
 function snapshotActive(){
-  tabs[active]={ current, hist:hist.slice(), histIdx, selName, entries, filterText };
+  tabs[active]={ current, hist:hist.slice(), histIdx, selName, selSet:[...selSet], entries, filterText };
 }
 function restoreLive(s){
   current=s.current; hist=(s.hist||[]).slice(); histIdx=(s.histIdx??-1);
-  selName=s.selName||null; entries=s.entries||[]; filterText=s.filterText||"";
+  selName=s.selName||null; selSet=new Set(s.selSet||[]); entries=s.entries||[]; filterText=s.filterText||"";
   $("#filter").value=filterText; setSearchPlaceholder();
   buildSide(); buildCrumbs(); renderTabbar(); render(); updateNav();
   $(".main").scrollTop=0;
@@ -700,25 +743,38 @@ async function doMkdir(){
   const name=prompt(t("newFolderPrompt"),t("newFolderDefault")); if(!name) return;
   if(await api("/api/mkdir?path="+encodeURIComponent(join(current,name)),t("created"))) load(current,true);
 }
-function doCut(){ const e=selEntry(); if(!e) return; clipboard={path:join(current,e.name),name:e.name,op:"cut"}; toast(t("cutDone")); render(); }
-function doCopy(){ const e=selEntry(); if(!e) return; clipboard={path:join(current,e.name),name:e.name,op:"copy"}; toast(t("copyDone")); render(); }
+function grab(op){ if(!selSet.size) return; clipboard={items:[...selSet].map(n=>({path:join(current,n),name:n})),op}; toast((op==="cut"?t("cutDone"):t("copyDone"))+(selSet.size>1?` (${selSet.size})`:"")); render(); }
+function doCut(){ grab("cut"); }
+function doCopy(){ grab("copy"); }
 async function doPaste(){
-  if(!clipboard) return;
-  const dest=join(current,clipboard.name);
-  if(dest===clipboard.path){ toast(t("sameTarget"),true); return; }
-  const u=(clipboard.op==="cut"?"/api/move":"/api/copy")+"?from="+encodeURIComponent(clipboard.path)+"&to="+encodeURIComponent(dest);
-  if(await api(u,clipboard.op==="cut"?t("moved"):t("copyDone"))){ if(clipboard.op==="cut") clipboard=null; load(current,true); }
+  if(!clipboard||!clipboard.items.length) return;
+  let ok=0;
+  for(const it of clipboard.items){
+    const dest=join(current,it.name);
+    if(dest===it.path) continue;
+    const u=(clipboard.op==="cut"?"/api/move":"/api/copy")+"?from="+encodeURIComponent(it.path)+"&to="+encodeURIComponent(dest);
+    const res=await fetch(u,{method:"POST"}); const d=await res.json(); if(!d.error) ok++;
+  }
+  toast((clipboard.op==="cut"?t("moved"):t("copyDone"))+(clipboard.items.length>1?` (${ok})`:""));
+  if(clipboard.op==="cut") clipboard=null;
+  load(current,true);
 }
 async function doRename(){
-  const e=selEntry(); if(!e) return;
+  const e=selEntry(); if(!e) return;   // single item (anchor)
   const name=prompt(t("renamePrompt"),e.name); if(!name||name===e.name) return;
   if(await api("/api/move?from="+encodeURIComponent(join(current,e.name))+"&to="+encodeURIComponent(join(current,name)),t("renamed"))) load(current,true);
 }
 async function doDelete(){
-  const e=selEntry(); if(!e) return;
-  if(!confirm(t("deleteConfirm")+"\n\n"+join(current,e.name)+(e.kind==="directory"?"\n\n"+t("folderNote"):""))) return;
-  const p=join(current,e.name);
-  if(await api("/api/delete?path="+encodeURIComponent(p),t("deleted"))){ if(clipboard&&clipboard.path===p) clipboard=null; load(current,true); }
+  if(!selSet.size) return;
+  const names=[...selSet];
+  const one=entries.find(x=>x.name===names[0]);
+  const msg = names.length===1 ? join(current,names[0])+(one&&one.kind==="directory"?"\n\n"+t("folderNote"):"") : t("deleteN")(names.length);
+  if(!confirm(t("deleteConfirm")+"\n\n"+msg)) return;
+  let ok=0;
+  for(const n of names){ const res=await fetch("/api/delete?path="+encodeURIComponent(join(current,n)),{method:"POST"}); const d=await res.json(); if(!d.error) ok++; }
+  clipboard=null;
+  toast(t("deleted")+(names.length>1?` (${ok})`:""));
+  load(current,true);
 }
 async function doZip(){
   const e=selEntry(); if(!e) return;
@@ -789,14 +845,15 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape") closeMenu();
   if(e.target.tagName==="INPUT"){ if(e.key==="Escape"){ e.target.value=""; filterText=""; render(); e.target.blur(); } return; }
   const mod=e.metaKey||e.ctrlKey;
-  if(mod&&e.key==="x"&&selName){ e.preventDefault(); doCut(); }
-  else if(mod&&e.key==="c"&&selName){ e.preventDefault(); doCopy(); }
+  if(mod&&e.key==="a"){ e.preventDefault(); selectAll(); }
+  else if(mod&&e.key==="x"&&selSet.size){ e.preventDefault(); doCut(); }
+  else if(mod&&e.key==="c"&&selSet.size){ e.preventDefault(); doCopy(); }
   else if(mod&&e.key==="v"&&clipboard){ e.preventDefault(); doPaste(); }
-  else if(e.key==="F2"&&selName){ e.preventDefault(); doRename(); }
-  else if((e.key==="Delete"||e.key==="Backspace")&&selName){ e.preventDefault(); doDelete(); }
-  else if(e.key==="Enter"&&selName){ const en=selEntry(); if(en&&en.kind==="directory") load(join(current,en.name)); }
-  else if(!mod&&!e.altKey&&(e.key==="ArrowDown")){ e.preventDefault(); moveSel(1); }
-  else if(!mod&&!e.altKey&&(e.key==="ArrowUp")){ e.preventDefault(); moveSel(-1); }
+  else if(e.key==="F2"&&selSet.size===1){ e.preventDefault(); doRename(); }
+  else if((e.key==="Delete"||e.key==="Backspace")&&selSet.size){ e.preventDefault(); doDelete(); }
+  else if(e.key==="Enter"&&selSet.size===1){ const en=selEntry(); if(en&&en.kind==="directory") load(join(current,en.name)); }
+  else if(!mod&&!e.altKey&&(e.key==="ArrowDown")){ e.preventDefault(); moveSel(1,e.shiftKey); }
+  else if(!mod&&!e.altKey&&(e.key==="ArrowUp")){ e.preventDefault(); moveSel(-1,e.shiftKey); }
   else if(!mod&&(e.key==="Home")){ e.preventDefault(); moveSel("first"); }
   else if(!mod&&(e.key==="End")){ e.preventDefault(); moveSel("last"); }
 });
