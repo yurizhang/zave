@@ -1,6 +1,6 @@
 # window-finder
 
-**v1.6.0** · A fast, powerful **Windows 11-style file manager for macOS** — a real Finder replacement, packed into a single dependency-free **Zig 0.16** binary.
+**v1.6.1** · A fast, powerful **Windows 11-style file manager for macOS** — a real Finder replacement, packed into a single dependency-free **Zig 0.16** binary.
 
 > 🇨🇳 中文文档请看 [README.zh.md](README.zh.md)
 
