@@ -139,7 +139,9 @@ body{background:var(--win);color:var(--text)}
 .ctxsep{height:1px;background:var(--border);margin:5px 6px}
 .ctxitem .val{margin-left:auto;color:var(--faint);font-size:12px}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:60}
-.about{width:380px;max-width:90vw;background:var(--content);border:1px solid var(--border-strong);border-radius:14px;box-shadow:0 20px 60px var(--shadow);padding:26px;text-align:center;color:var(--text)}
+.about{position:relative;width:380px;max-width:90vw;background:var(--content);border:1px solid var(--border-strong);border-radius:14px;box-shadow:0 20px 60px var(--shadow);padding:26px;text-align:center;color:var(--text)}
+.about-x{position:absolute;top:12px;right:12px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;color:var(--muted);cursor:pointer;font-size:18px}
+.about-x:hover{background:var(--hover);color:var(--text)}
 .about .logo{font-size:54px;color:var(--accent)}
 .about h2{margin:10px 0 2px;font-size:20px}
 .about .ver{color:var(--muted);font-size:13px;margin-bottom:8px}
@@ -882,6 +884,7 @@ function showAbout(){
   closeAbout();
   const ov=document.createElement("div"); ov.className="overlay"; ov.id="aboutOverlay";
   ov.innerHTML=`<div class="about">
+    <i class="ti ti-x about-x" id="aboutCloseBtn" title="${t("aboutClose")}"></i>
     <div class="logo"><i class="ti ti-folder"></i></div>
     <h2>window-finder</h2>
     <div class="ver">v${APP_VERSION}</div>
@@ -890,7 +893,6 @@ function showAbout(){
     <div class="author"><i class="ti ti-mail"></i><a href="mailto:zhangyong0604@126.com">zhangyong0604@126.com</a></div>
     <div class="links">
       <a class="btn gh" href="https://github.com/yurizhang/window-finder" target="_blank" rel="noopener"><i class="ti ti-brand-github"></i>${t("aboutGithub")}</a>
-      <button class="btn close" id="aboutCloseBtn"><i class="ti ti-x"></i>${t("aboutClose")}</button>
     </div>
     <div class="meta">${t("aboutBuilt")}</div>
   </div>`;
