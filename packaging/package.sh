@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build a universal (arm64 + x86_64) window-finder.app and optionally a .dmg.
-# Usage: ./packaging/package.sh [--dmg]
+# Build a universal (arm64 + x86_64) window-finder.app, optional .zip / .dmg.
+# Usage: ./packaging/package.sh [--zip] [--dmg]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -30,12 +30,23 @@ chmod +x "${OUT}/${APP}/Contents/MacOS/window-finder"
 echo "      $(lipo -archs "${OUT}/${APP}/Contents/MacOS/window-finder")"
 echo "Done: ${OUT}/${APP}"
 
-if [ "${1:-}" = "--dmg" ]; then
-  echo "[4/4] Building .dmg ..."
-  rm -f "${OUT}/window-finder.dmg"
-  hdiutil create -volname "window-finder" -srcfolder "${OUT}/${APP}" \
-    -ov -format UDZO "${OUT}/window-finder.dmg" >/dev/null
-  echo "Done: ${OUT}/window-finder.dmg"
-fi
+for arg in "$@"; do
+  case "$arg" in
+    --zip)
+      echo "[+] Building .zip ..."
+      rm -f "${OUT}/window-finder.zip"
+      # ditto preserves the .app bundle correctly (better than `zip` here)
+      ditto -c -k --sequesterRsrc --keepParent "${OUT}/${APP}" "${OUT}/window-finder.zip"
+      echo "Done: ${OUT}/window-finder.zip"
+      ;;
+    --dmg)
+      echo "[+] Building .dmg ..."
+      rm -f "${OUT}/window-finder.dmg"
+      hdiutil create -volname "window-finder" -srcfolder "${OUT}/${APP}" \
+        -ov -format UDZO "${OUT}/window-finder.dmg" >/dev/null
+      echo "Done: ${OUT}/window-finder.dmg"
+      ;;
+  esac
+done
 
 echo "Launch with:  open ${OUT}/${APP}"

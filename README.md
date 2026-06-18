@@ -58,15 +58,16 @@ Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the ch
 
 `zig build run` opens a **native window** (a WKWebView hosting the UI) — no browser needed. Under the hood the HTTP server runs as a child process and the window points at it.
 
-- Build a distributable **universal** (arm64 + Intel) `.app` (and a `.dmg`):
+- Build a distributable **universal** (arm64 + Intel) `.app`, `.zip` or `.dmg`:
   ```bash
-  ./packaging/package.sh          # -> dist/window-finder.app
-  ./packaging/package.sh --dmg    # -> dist/window-finder.dmg
+  ./packaging/package.sh                # -> dist/window-finder.app
+  ./packaging/package.sh --zip          # -> dist/window-finder.zip
+  ./packaging/package.sh --zip --dmg    # both
   ```
-- **Installing a downloaded build:** it is **not code-signed** (no paid Apple
-  Developer account), so the first launch needs **right-click the app → Open →
-  Open** to get past Gatekeeper (only once). Or run
-  `xattr -dr com.apple.quarantine /Applications/window-finder.app`.
+- **Installing a downloaded build:** the app is **not code-signed** (no paid
+  Apple Developer account). Easiest is the **`.zip`**: double-click to unzip,
+  then **right-click window-finder → Open → Open** (runs from anywhere — no
+  need to move it). Only needed once. (Or `xattr -dr com.apple.quarantine window-finder.app`.)
 - Prefer the browser instead of a window? Run headless: `HEADLESS=1 zig build run`, then open the printed URL.
 - macOS will ask permission the first time it touches Desktop/Documents/Downloads (normal privacy prompts). Click **Allow**, or grant **Full Disk Access** to window-finder once in System Settings → Privacy & Security.
 
