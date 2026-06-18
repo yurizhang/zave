@@ -596,6 +596,21 @@ function updateButtons(){
 }
 function setSearchPlaceholder(){ $("#filter").placeholder=t("searchPrefix")+(basename(current)||"/"); }
 
+// move selection with the keyboard; delta=±1, or "first"/"last"
+function moveSel(delta){
+  const list=visible();
+  if(list.length===0) return;
+  let idx=list.findIndex(e=>e.name===selName);
+  if(delta==="first") idx=0;
+  else if(delta==="last") idx=list.length-1;
+  else if(idx===-1) idx = delta>0 ? 0 : list.length-1;
+  else idx = Math.max(0, Math.min(list.length-1, idx+delta));
+  selName=list[idx].name;
+  render();
+  const el=document.querySelector((view==="list"?"#listView":"#gridView")+" .sel");
+  if(el) el.scrollIntoView({block:"nearest"});
+}
+
 // ───────── load / navigation ─────────
 async function load(path, fromHist){
   try{
@@ -767,6 +782,10 @@ document.addEventListener("keydown",e=>{
   else if(e.key==="F2"&&selName){ e.preventDefault(); doRename(); }
   else if((e.key==="Delete"||e.key==="Backspace")&&selName){ e.preventDefault(); doDelete(); }
   else if(e.key==="Enter"&&selName){ const en=selEntry(); if(en&&en.kind==="directory") load(join(current,en.name)); }
+  else if(!mod&&!e.altKey&&(e.key==="ArrowDown")){ e.preventDefault(); moveSel(1); }
+  else if(!mod&&!e.altKey&&(e.key==="ArrowUp")){ e.preventDefault(); moveSel(-1); }
+  else if(!mod&&(e.key==="Home")){ e.preventDefault(); moveSel("first"); }
+  else if(!mod&&(e.key==="End")){ e.preventDefault(); moveSel("last"); }
 });
 
 // init

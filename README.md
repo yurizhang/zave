@@ -26,7 +26,7 @@ The motivation is simple: macOS Finder is awkward — you can't see the full pat
 | 👁️‍🗨️ Preview | Inline preview of text/code & images in the details panel; everything else gets an "Open with default app" button (macOS `open`) |
 | 👁️ Hidden files | Toggle to show/hide dot-files |
 | 🔍 Search | Live filter of the current directory by filename |
-| ⌨️ Keyboard shortcuts | `Cmd/Ctrl + X / C / V` for cut/copy/paste, `F2` to rename, `Delete` to remove |
+| ⌨️ Keyboard shortcuts | `↑`/`↓` to move selection (`Home`/`End` for first/last), `Enter` to open, `Cmd/Ctrl + X / C / V` cut/copy/paste, `F2` rename, `Delete` remove |
 | 🌗 Theme & 🌐 language | Dark / light theme and English / 中文 toggles, both persisted |
 | 🔤 Auto sort | Directories first, then files, sorted by name |
 | 📏 File size | Auto-formatted as B / KB / MB / GB |
