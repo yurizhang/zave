@@ -123,6 +123,14 @@ body{background:var(--win);color:var(--text)}
 .toast{position:fixed;bottom:46px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;max-width:80%;box-shadow:0 6px 20px var(--shadow);z-index:9}
 .toast.show{opacity:1}
 .toast.bad{background:var(--pdf)}
+.ctxmenu{position:fixed;z-index:50;min-width:184px;background:var(--content);border:1px solid var(--border-strong);border-radius:9px;box-shadow:0 12px 34px var(--shadow);padding:5px;font-size:13px}
+.ctxitem{display:flex;align-items:center;gap:11px;height:32px;padding:0 10px;border-radius:6px;cursor:pointer;color:var(--text)}
+.ctxitem:hover{background:var(--hover)}
+.ctxitem.disabled{color:var(--faint);cursor:default}
+.ctxitem.disabled:hover{background:transparent}
+.ctxitem.danger{color:var(--pdf)}
+.ctxitem .ti{font-size:17px;width:18px;text-align:center}
+.ctxsep{height:1px;background:var(--border);margin:5px 6px}
 </style>
 </head>
 <body>
@@ -217,6 +225,7 @@ const I18N = {
     newFolderPrompt:"New folder name:", newFolderDefault:"New folder", renamePrompt:"Rename to:",
     deleteConfirm:"Delete?", folderNote:"(entire folder and its contents)",
     openWith:"Open with default app", opened:"Opened", openFailed:"Open failed", previewEmpty:"(empty file)", loading:"Loading…",
+    mOpen:"Open", mCut:"Cut", mCopy:"Copy", mPaste:"Paste", mRename:"Rename", mDelete:"Delete", mCopyPath:"Copy path", mNewFolder:"New folder", mRefresh:"Refresh",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -243,6 +252,7 @@ const I18N = {
     newFolderPrompt:"新文件夹名称:", newFolderDefault:"新建文件夹", renamePrompt:"重命名为:",
     deleteConfirm:"确定删除?", folderNote:"(整个文件夹及其内容)",
     openWith:"用默认程序打开", opened:"已打开", openFailed:"打开失败", previewEmpty:"(空文件)", loading:"加载中…",
+    mOpen:"打开", mCut:"剪切", mCopy:"复制", mPaste:"粘贴", mRename:"重命名", mDelete:"删除", mCopyPath:"复制路径", mNewFolder:"新建文件夹", mRefresh:"刷新",
   },
 };
 let lang = "en";
@@ -424,6 +434,7 @@ function bindRows(container,sel){
     const e=entries.find(x=>x.name===name);
     el.onclick=()=>{ selName=name; render(); };
     el.ondblclick=()=>{ if(e.kind==="directory") load(join(current,name)); else copyText(join(current,name)); };
+    el.oncontextmenu=(ev)=>{ ev.preventDefault(); ev.stopPropagation(); selName=name; render(); itemMenu(ev.clientX,ev.clientY,e); };
   });
 }
 function renderDetails(){
@@ -471,6 +482,47 @@ function renderDetails(){
 }
 async function openExternal(path){
   if(await api("/api/open?path="+encodeURIComponent(path),t("opened"))) {}
+}
+
+// ───────── context menu ─────────
+function closeMenu(){ const m=$("#ctxmenu"); if(m) m.remove(); }
+function showMenu(x,y,items){
+  closeMenu();
+  const m=document.createElement("div"); m.className="ctxmenu"; m.id="ctxmenu";
+  for(const it of items){
+    if(it.sep){ const s=document.createElement("div"); s.className="ctxsep"; m.appendChild(s); continue; }
+    const el=document.createElement("div");
+    el.className="ctxitem"+(it.disabled?" disabled":"")+(it.danger?" danger":"");
+    el.innerHTML=`<i class="ti ${it.icon}"></i>${it.label}`;
+    if(!it.disabled) el.onclick=()=>{ closeMenu(); it.action(); };
+    m.appendChild(el);
+  }
+  document.body.appendChild(m);
+  const r=m.getBoundingClientRect();
+  m.style.left=Math.max(4,Math.min(x,window.innerWidth-r.width-6))+"px";
+  m.style.top=Math.max(4,Math.min(y,window.innerHeight-r.height-6))+"px";
+}
+function itemMenu(x,y,e){
+  const full=join(current,e.name);
+  showMenu(x,y,[
+    {icon:"ti-external-link", label:t("mOpen"), action:()=>openExternal(full)},
+    {sep:true},
+    {icon:"ti-scissors", label:t("mCut"), action:doCut},
+    {icon:"ti-copy", label:t("mCopy"), action:doCopy},
+    {icon:"ti-clipboard", label:t("mPaste"), action:doPaste, disabled:!clipboard},
+    {sep:true},
+    {icon:"ti-pencil", label:t("mRename"), action:doRename},
+    {icon:"ti-link", label:t("mCopyPath"), action:()=>copyText(full)},
+    {icon:"ti-trash", label:t("mDelete"), action:doDelete, danger:true},
+  ]);
+}
+function bgMenu(x,y){
+  showMenu(x,y,[
+    {icon:"ti-folder-plus", label:t("mNewFolder"), action:doMkdir},
+    {icon:"ti-clipboard", label:t("mPaste"), action:doPaste, disabled:!clipboard},
+    {sep:true},
+    {icon:"ti-refresh", label:t("mRefresh"), action:()=>load(current,true)},
+  ]);
 }
 function updateButtons(){
   const has=!!selName;
@@ -560,6 +612,13 @@ document.querySelectorAll(".listhead span[data-sort]").forEach(s=>s.onclick=()=>
   const k=s.dataset.sort; if(k===sortKey) sortAsc=!sortAsc; else { sortKey=k; sortAsc=true; } render();
 });
 document.querySelectorAll(".vbtn").forEach(b=>b.onclick=()=>setView(b.dataset.view));
+
+// right-click: empty area of the file pane → background menu
+$(".main").addEventListener("contextmenu",ev=>{ ev.preventDefault(); bgMenu(ev.clientX,ev.clientY); });
+// dismiss the menu on any click / scroll / window blur
+document.addEventListener("click",closeMenu);
+document.addEventListener("scroll",closeMenu,true);
+window.addEventListener("blur",closeMenu);
 function setView(v){
   view=v;
   document.querySelectorAll(".vbtn").forEach(x=>x.classList.toggle("active",x.dataset.view===v));
@@ -586,6 +645,7 @@ $("#themeBtn").onclick=()=>applyTheme(!document.documentElement.classList.contai
 
 // keyboard shortcuts
 document.addEventListener("keydown",e=>{
+  if(e.key==="Escape") closeMenu();
   if(e.target.tagName==="INPUT"){ if(e.key==="Escape"){ e.target.value=""; filterText=""; render(); e.target.blur(); } return; }
   const mod=e.metaKey||e.ctrlKey;
   if(mod&&e.key==="x"&&selName){ e.preventDefault(); doCut(); }
