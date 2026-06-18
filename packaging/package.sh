@@ -27,6 +27,11 @@ cp packaging/Info.plist "${OUT}/${APP}/Contents/Info.plist"
 lipo -create /tmp/wf_arm64 /tmp/wf_x86 -output "${OUT}/${APP}/Contents/MacOS/window-finder"
 chmod +x "${OUT}/${APP}/Contents/MacOS/window-finder"
 [ -f packaging/icon.icns ] && cp packaging/icon.icns "${OUT}/${APP}/Contents/Resources/icon.icns" || true
+
+# Ad-hoc sign (free, no Apple account): gives the app a stable identity so
+# macOS remembers folder-access (TCC) grants instead of re-prompting.
+codesign --force --deep --sign - "${OUT}/${APP}"
+
 echo "      $(lipo -archs "${OUT}/${APP}/Contents/MacOS/window-finder")"
 echo "Done: ${OUT}/${APP}"
 
