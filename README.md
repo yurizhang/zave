@@ -197,7 +197,7 @@ Each request uses an **ArenaAllocator** that is freed as a whole when the reques
 - [x] File preview (text / code / images) + open with default app
 - [x] PDF inline preview (`<iframe>` embed)
 - [x] Right-click context menu
-- [ ] Multiple tabs (independent directories)
+- [x] Multiple tabs (independent directories)
 - [ ] Drag-and-drop to move
 - [ ] Finer file-type icons
 

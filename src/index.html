@@ -28,9 +28,15 @@ body{background:var(--win);color:var(--text)}
 .win{width:100%;height:100vh;background:var(--win);display:flex;flex-direction:column;overflow:hidden}
 
 .titlebar{display:flex;align-items:center;height:44px;padding-left:10px;gap:3px;background:var(--win);flex:0 0 auto}
-.tab{display:flex;align-items:center;gap:9px;height:34px;padding:0 14px;font-size:13px;color:var(--text);border-radius:9px 9px 0 0;cursor:default;user-select:none;background:var(--content);font-weight:600;max-width:240px}
-.tab .ti{font-size:17px}
+.tabs{display:flex;align-items:center;gap:3px;min-width:0;overflow:hidden}
+.tab{display:flex;align-items:center;gap:8px;height:34px;padding:0 8px 0 12px;font-size:13px;color:var(--muted);border-radius:9px 9px 0 0;cursor:pointer;user-select:none;max-width:200px;flex:0 1 auto}
+.tab.active{background:var(--content);color:var(--text);font-weight:600}
+.tab .ti{font-size:16px;flex:0 0 auto}
 .tab .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab .close{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;color:var(--faint);font-size:13px;flex:0 0 auto}
+.tab .close:hover{background:var(--hover);color:var(--text)}
+.newtab{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:var(--muted);cursor:pointer;flex:0 0 auto}
+.newtab:hover{background:var(--hover)}
 .spacer{flex:1}
 .wbtn{display:flex;align-items:center;justify-content:center;min-width:46px;height:44px;padding:0 8px;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600}
 .wbtn:hover{background:var(--hover)}
@@ -137,7 +143,8 @@ body{background:var(--win);color:var(--text)}
 <div class="win">
 
   <div class="titlebar">
-    <div class="tab"><i class="ti ti-folder"></i><span class="nm" id="tabName">File Manager</span></div>
+    <div class="tabs" id="tabbar"></div>
+    <div class="newtab" id="newTabBtn" data-i18n-title="newTabTitle"><i class="ti ti-plus"></i></div>
     <div class="spacer"></div>
     <div class="wbtn" id="langBtn" data-i18n-title="lang">中</div>
     <div class="wbtn" id="themeBtn" data-i18n-title="theme"><i class="ti ti-moon"></i></div>
@@ -226,6 +233,7 @@ const I18N = {
     deleteConfirm:"Delete?", folderNote:"(entire folder and its contents)",
     openWith:"Open with default app", opened:"Opened", openFailed:"Open failed", previewEmpty:"(empty file)", loading:"Loading…",
     mOpen:"Open", mCut:"Cut", mCopy:"Copy", mPaste:"Paste", mRename:"Rename", mDelete:"Delete", mCopyPath:"Copy path", mNewFolder:"New folder", mRefresh:"Refresh",
+    newTabTitle:"New tab", mOpenNewTab:"Open in new tab",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -253,6 +261,7 @@ const I18N = {
     deleteConfirm:"确定删除?", folderNote:"(整个文件夹及其内容)",
     openWith:"用默认程序打开", opened:"已打开", openFailed:"打开失败", previewEmpty:"(空文件)", loading:"加载中…",
     mOpen:"打开", mCut:"剪切", mCopy:"复制", mPaste:"粘贴", mRename:"重命名", mDelete:"删除", mCopyPath:"复制路径", mNewFolder:"新建文件夹", mRefresh:"刷新",
+    newTabTitle:"新建标签页", mOpenNewTab:"在新标签页打开",
   },
 };
 let lang = "en";
@@ -262,6 +271,7 @@ const t = (k) => I18N[lang][k];
 let current = "", home = "", entries = [], selName = null;
 let clipboard = null, view = "list", showHidden = false, filterText = "";
 let sortKey = "name", sortAsc = true, hist = [], histIdx = -1;
+let tabs = [], active = 0;   // each tab: {current, hist, histIdx, selName, entries, filterText}
 
 // ───────── helpers ─────────
 const join = (dir, name) => (dir.endsWith("/") ? dir : dir + "/") + name;
@@ -506,6 +516,7 @@ function itemMenu(x,y,e){
   const full=join(current,e.name);
   showMenu(x,y,[
     {icon:"ti-external-link", label:t("mOpen"), action:()=>openExternal(full)},
+    ...(e.kind==="directory" ? [{icon:"ti-folder", label:t("mOpenNewTab"), action:()=>newTab(full)}] : []),
     {sep:true},
     {icon:"ti-scissors", label:t("mCut"), action:doCut},
     {icon:"ti-copy", label:t("mCopy"), action:doCopy},
@@ -541,15 +552,63 @@ async function load(path, fromHist){
     current=data.path; home=data.home||home; entries=data.entries;
     selName=null; filterText=""; $("#filter").value="";
     if(!fromHist){ hist=hist.slice(0,histIdx+1); hist.push(current); histIdx=hist.length-1; }
-    $("#tabName").textContent=basename(current)||"/";
     setSearchPlaceholder();
-    buildSide(); buildCrumbs(); render(); updateNav();
+    buildSide(); buildCrumbs(); renderTabbar(); render(); updateNav();
     $(".main").scrollTop=0;
   }catch(err){ toast(t("loadFailed")+err,true); }
 }
 function updateNav(){
   $("#backBtn").classList.toggle("disabled",histIdx<=0);
   $("#fwdBtn").classList.toggle("disabled",histIdx>=hist.length-1);
+}
+
+// ───────── tabs ─────────
+function renderTabbar(){
+  const bar=$("#tabbar"); bar.innerHTML="";
+  tabs.forEach((tb,i)=>{
+    const cur = (i===active) ? current : tb.current;
+    const el=document.createElement("div");
+    el.className="tab"+(i===active?" active":"");
+    el.innerHTML=`<i class="ti ti-folder"></i><span class="nm">${escapeHtml(basename(cur)||"/")}</span>`;
+    if(tabs.length>1){
+      const x=document.createElement("i"); x.className="ti ti-x close";
+      x.onclick=(ev)=>{ ev.stopPropagation(); closeTab(i); };
+      el.appendChild(x);
+    }
+    el.onclick=()=>switchTab(i);
+    bar.appendChild(el);
+  });
+}
+function snapshotActive(){
+  tabs[active]={ current, hist:hist.slice(), histIdx, selName, entries, filterText };
+}
+function restoreLive(s){
+  current=s.current; hist=(s.hist||[]).slice(); histIdx=(s.histIdx??-1);
+  selName=s.selName||null; entries=s.entries||[]; filterText=s.filterText||"";
+  $("#filter").value=filterText; setSearchPlaceholder();
+  buildSide(); buildCrumbs(); renderTabbar(); render(); updateNav();
+  $(".main").scrollTop=0;
+}
+function newTab(path){
+  snapshotActive();
+  tabs.push({ current:"", hist:[], histIdx:-1, selName:null, entries:[], filterText:"" });
+  active=tabs.length-1;
+  hist=[]; histIdx=-1; selName=null; filterText=""; entries=[];
+  load(path||home||"");
+}
+function switchTab(i){
+  if(i===active) return;
+  snapshotActive();
+  active=i;
+  restoreLive(tabs[i]);
+}
+function closeTab(i){
+  if(tabs.length<=1) return;
+  const wasActive=(i===active);
+  tabs.splice(i,1);
+  if(!wasActive){ if(active>i) active--; renderTabbar(); return; }
+  active=Math.min(i,tabs.length-1);
+  restoreLive(tabs[active]);
 }
 
 // ───────── POST wrapper ─────────
@@ -602,6 +661,7 @@ $("#backBtn").onclick=()=>{ if(histIdx>0){ histIdx--; load(hist[histIdx],true); 
 $("#fwdBtn").onclick=()=>{ if(histIdx<hist.length-1){ histIdx++; load(hist[histIdx],true); } };
 $("#upBtn").onclick=()=>load(parentOf(current));
 $("#refreshBtn").onclick=()=>load(current,true);
+$("#newTabBtn").onclick=()=>newTab();
 
 $("#filter").addEventListener("input",e=>{ filterText=e.target.value; render(); });
 $("#hiddenBtn").onclick=()=>{ showHidden=!showHidden; render(); toast(showHidden?t("showingHidden"):t("hidingHidden")); };
@@ -657,6 +717,8 @@ document.addEventListener("keydown",e=>{
 });
 
 // init
+tabs=[{ current:"", hist:[], histIdx:-1, selName:null, entries:[], filterText:"" }];
+active=0;
 applyStatic();
 load("");
 </script>
