@@ -1,7 +1,7 @@
 {
-  "id": "",
-  "level": "info",
-  "title": "",
-  "message": "",
-  "url": ""
+  "id": "test-2026-06-18",
+  "level": "warning",
+  "title": "测试通知",
+  "message": "这是一条测试公告 —— 如果你看到它,说明远程通知功能正常工作!点这里旁边的齿轮 ⚙ → 通知 可查看详情。",
+  "url": "https://github.com/yurizhang/window-finder/releases/latest"
 }
