@@ -295,32 +295,51 @@ function fmtDate(ms){
 }
 function ext(name){ const i=name.lastIndexOf("."); return i<=0?"":name.slice(i+1).toLowerCase(); }
 
-// [icon, colorVar, English name, 中文 name]
+// [icon, color (any CSS color), English name, 中文 name]
 const TYPE_MAP = {
-  doc:["ti-file-text","--doc","Word Document","Word 文档"], docx:["ti-file-text","--doc","Word Document","Word 文档"],
-  xls:["ti-file-spreadsheet","--xls","Excel Spreadsheet","Excel 工作表"], xlsx:["ti-file-spreadsheet","--xls","Excel Spreadsheet","Excel 工作表"], csv:["ti-file-spreadsheet","--xls","CSV File","CSV 文件"],
-  ppt:["ti-file-text","--doc","PowerPoint Presentation","PowerPoint 演示"], pptx:["ti-file-text","--doc","PowerPoint Presentation","PowerPoint 演示"],
-  pdf:["ti-file-typography","--pdf","PDF Document","PDF 文档"],
-  png:["ti-photo","--img","PNG Image","PNG 图像"], jpg:["ti-photo","--img","JPEG Image","JPEG 图像"], jpeg:["ti-photo","--img","JPEG Image","JPEG 图像"],
-  gif:["ti-photo","--img","GIF Image","GIF 图像"], webp:["ti-photo","--img","WebP Image","WebP 图像"], svg:["ti-photo","--img","SVG Image","SVG 图像"], bmp:["ti-photo","--img","Bitmap Image","位图图像"], heic:["ti-photo","--img","HEIC Image","HEIC 图像"],
-  zip:["ti-file-zip","--zip","Compressed Folder","压缩文件夹"], tar:["ti-file-zip","--zip","Archive","归档文件"], gz:["ti-file-zip","--zip","Compressed File","压缩文件"], rar:["ti-file-zip","--zip","Compressed File","压缩文件"], "7z":["ti-file-zip","--zip","Compressed File","压缩文件"],
-  mp3:["ti-music","--aud","Audio File","音频文件"], m4a:["ti-music","--aud","Audio File","音频文件"], wav:["ti-music","--aud","Audio File","音频文件"], flac:["ti-music","--aud","Audio File","音频文件"], aac:["ti-music","--aud","Audio File","音频文件"],
-  mp4:["ti-movie","--aud","Video File","视频文件"], mov:["ti-movie","--aud","Video File","视频文件"], mkv:["ti-movie","--aud","Video File","视频文件"], avi:["ti-movie","--aud","Video File","视频文件"], webm:["ti-movie","--aud","Video File","视频文件"],
-  txt:["ti-file-text","--doc","Text Document","文本文档"], md:["ti-file-text","--doc","Markdown Document","Markdown 文档"],
-  zig:["ti-file-code","--doc","Zig Source","Zig 源文件"], js:["ti-file-code","--doc","JavaScript File","JavaScript 文件"], ts:["ti-file-code","--doc","TypeScript File","TypeScript 文件"],
-  html:["ti-file-code","--doc","HTML File","HTML 文件"], css:["ti-file-code","--doc","CSS File","CSS 文件"], json:["ti-file-code","--doc","JSON File","JSON 文件"],
-  py:["ti-file-code","--doc","Python File","Python 文件"], sh:["ti-file-code","--doc","Shell Script","Shell 脚本"], c:["ti-file-code","--doc","C Source","C 源文件"], rs:["ti-file-code","--doc","Rust Source","Rust 源文件"],
+  // documents
+  doc:["ti-file-type-docx","var(--doc)","Word Document","Word 文档"], docx:["ti-file-type-docx","var(--doc)","Word Document","Word 文档"], rtf:["ti-file-type-doc","var(--doc)","Rich Text","RTF 文档"],
+  xls:["ti-file-type-xls","var(--xls)","Excel Spreadsheet","Excel 工作表"], xlsx:["ti-file-type-xls","var(--xls)","Excel Spreadsheet","Excel 工作表"], csv:["ti-file-type-csv","var(--xls)","CSV File","CSV 文件"],
+  ppt:["ti-file-type-ppt","#d24726","PowerPoint Presentation","PowerPoint 演示"], pptx:["ti-file-type-ppt","#d24726","PowerPoint Presentation","PowerPoint 演示"],
+  pdf:["ti-file-type-pdf","var(--pdf)","PDF Document","PDF 文档"],
+  txt:["ti-file-type-txt","var(--muted)","Text Document","文本文档"], log:["ti-file-text","var(--muted)","Log File","日志文件"],
+  md:["ti-markdown","var(--doc)","Markdown Document","Markdown 文档"], markdown:["ti-markdown","var(--doc)","Markdown Document","Markdown 文档"],
+  // images
+  png:["ti-file-type-png","var(--img)","PNG Image","PNG 图像"], jpg:["ti-file-type-jpg","var(--img)","JPEG Image","JPEG 图像"], jpeg:["ti-file-type-jpg","var(--img)","JPEG Image","JPEG 图像"],
+  gif:["ti-photo","var(--img)","GIF Image","GIF 图像"], webp:["ti-photo","var(--img)","WebP Image","WebP 图像"], svg:["ti-file-type-svg","var(--img)","SVG Image","SVG 图像"], bmp:["ti-file-type-bmp","var(--img)","Bitmap Image","位图图像"], ico:["ti-photo","var(--img)","Icon","图标文件"], heic:["ti-photo","var(--img)","HEIC Image","HEIC 图像"],
+  // archives
+  zip:["ti-file-type-zip","var(--zip)","Compressed Folder","压缩文件夹"], tar:["ti-file-zip","var(--zip)","Archive","归档文件"], gz:["ti-file-zip","var(--zip)","Compressed File","压缩文件"], rar:["ti-file-zip","var(--zip)","Compressed File","压缩文件"], "7z":["ti-file-zip","var(--zip)","Compressed File","压缩文件"],
+  // audio / video
+  mp3:["ti-music","var(--aud)","Audio File","音频文件"], m4a:["ti-music","var(--aud)","Audio File","音频文件"], wav:["ti-music","var(--aud)","Audio File","音频文件"], flac:["ti-music","var(--aud)","Audio File","音频文件"], aac:["ti-music","var(--aud)","Audio File","音频文件"],
+  mp4:["ti-movie","var(--aud)","Video File","视频文件"], mov:["ti-movie","var(--aud)","Video File","视频文件"], mkv:["ti-movie","var(--aud)","Video File","视频文件"], avi:["ti-movie","var(--aud)","Video File","视频文件"], webm:["ti-movie","var(--aud)","Video File","视频文件"],
+  // code — brand icons + brand colors
+  js:["ti-brand-javascript","#f7df1e","JavaScript File","JavaScript 文件"], mjs:["ti-brand-javascript","#f7df1e","JavaScript File","JavaScript 文件"], cjs:["ti-brand-javascript","#f7df1e","JavaScript File","JavaScript 文件"],
+  ts:["ti-brand-typescript","#3178c6","TypeScript File","TypeScript 文件"], jsx:["ti-brand-react","#61dafb","React JSX","React JSX"], tsx:["ti-brand-react","#61dafb","React TSX","React TSX"],
+  json:["ti-json","#d9a514","JSON File","JSON 文件"],
+  html:["ti-brand-html5","#e34f26","HTML File","HTML 文件"], htm:["ti-brand-html5","#e34f26","HTML File","HTML 文件"],
+  css:["ti-brand-css3","#1572b6","CSS File","CSS 文件"], scss:["ti-brand-css3","#cd6799","Sass Stylesheet","Sass 样式表"], less:["ti-brand-css3","#1d365d","Less Stylesheet","Less 样式表"],
+  py:["ti-brand-python","#3776ab","Python File","Python 文件"], php:["ti-brand-php","#777bb4","PHP File","PHP 文件"],
+  go:["ti-brand-golang","#00add8","Go Source","Go 源文件"], rs:["ti-brand-rust","#dea584","Rust Source","Rust 源文件"],
+  vue:["ti-brand-vue","#42b883","Vue Component","Vue 组件"], svelte:["ti-file-code","#ff3e00","Svelte Component","Svelte 组件"],
+  swift:["ti-brand-swift","#f05138","Swift Source","Swift 源文件"], kt:["ti-brand-kotlin","#7f52ff","Kotlin Source","Kotlin 源文件"], kts:["ti-brand-kotlin","#7f52ff","Kotlin Source","Kotlin 源文件"],
+  cs:["ti-brand-c-sharp","#68217a","C# Source","C# 源文件"], cpp:["ti-brand-cpp","#00599c","C++ Source","C++ 源文件"], cc:["ti-brand-cpp","#00599c","C++ Source","C++ 源文件"], cxx:["ti-brand-cpp","#00599c","C++ Source","C++ 源文件"], hpp:["ti-brand-cpp","#00599c","C++ Header","C++ 头文件"],
+  c:["ti-file-code","#5c6bc0","C Source","C 源文件"], h:["ti-file-code","#5c6bc0","C Header","C 头文件"],
+  zig:["ti-file-code","#f7a41d","Zig Source","Zig 源文件"], java:["ti-file-code","#f89820","Java Source","Java 源文件"], rb:["ti-file-code","#cc342d","Ruby Source","Ruby 源文件"],
+  sh:["ti-terminal-2","var(--green)","Shell Script","Shell 脚本"], bash:["ti-terminal-2","var(--green)","Shell Script","Shell 脚本"], zsh:["ti-terminal-2","var(--green)","Shell Script","Shell 脚本"],
+  sql:["ti-file-type-sql","var(--xls)","SQL File","SQL 文件"], xml:["ti-file-type-xml","#e37933","XML File","XML 文件"],
+  yaml:["ti-file-code","#cb171e","YAML File","YAML 文件"], yml:["ti-file-code","#cb171e","YAML File","YAML 文件"],
+  toml:["ti-file-settings","var(--muted)","Config File","配置文件"], ini:["ti-file-settings","var(--muted)","Config File","配置文件"], conf:["ti-file-settings","var(--muted)","Config File","配置文件"], cfg:["ti-file-settings","var(--muted)","Config File","配置文件"], env:["ti-file-settings","var(--muted)","Config File","配置文件"],
 };
 const IMG_EXT = new Set(["png","jpg","jpeg","gif","webp","svg","bmp","ico"]);
 const TEXT_EXT = new Set(["txt","md","markdown","log","csv","tsv","json","js","mjs","cjs","ts","jsx","tsx","css","scss","less","html","htm","xml","yaml","yml","toml","ini","conf","cfg","env","c","h","cpp","cc","hpp","cxx","m","mm","py","sh","bash","zsh","zig","rs","go","java","kt","rb","php","sql","vue","svelte","lua","pl","r","swift","gradle","properties","gitignore","dockerfile","makefile"]);
 const IMG_MAX = 8*1024*1024, TEXT_MAX = 1024*1024, PDF_MAX = 16*1024*1024;
 
 function meta(e){
-  if(e.kind==="directory") return {ic:"ti-folder", col:"--folder", tl:t("folder")};
+  if(e.kind==="directory") return {ic:"ti-folder", col:"var(--folder)", tl:t("folder")};
   const m=TYPE_MAP[ext(e.name)];
   if(m) return {ic:m[0], col:m[1], tl:(lang==="en"?m[2]:m[3])};
   const ex=ext(e.name);
-  return {ic:"ti-file", col:"--faint", tl: ex ? ex.toUpperCase()+t("fileSuffix") : t("file")};
+  return {ic:"ti-file", col:"var(--faint)", tl: ex ? ex.toUpperCase()+t("fileSuffix") : t("file")};
 }
 
 function toast(msg, bad){
@@ -417,7 +436,7 @@ function render(){
       const m=meta(e), full=join(current,e.name);
       const isCut=clipboard&&clipboard.op==="cut"&&clipboard.path===full;
       return `<div class="row ${e.name===selName?'sel':''} ${isCut?'cut':''}" data-n="${encodeURIComponent(e.name)}">
-        <div class="nm"><i class="ti ${m.ic}" style="color:var(${m.col})"></i><span>${escapeHtml(e.name)}</span></div>
+        <div class="nm"><i class="ti ${m.ic}" style="color:${m.col}"></i><span>${escapeHtml(e.name)}</span></div>
         <div class="c">${fmtDate(e.mtime)}</div><div class="c">${m.tl}</div><div class="c">${fmtSize(e.size,e.kind==='directory')||'—'}</div>
       </div>`;
     }).join("");
@@ -427,7 +446,7 @@ function render(){
       const m=meta(e), full=join(current,e.name);
       const isCut=clipboard&&clipboard.op==="cut"&&clipboard.path===full;
       return `<div class="cell ${e.name===selName?'sel':''} ${isCut?'cut':''}" data-n="${encodeURIComponent(e.name)}">
-        <i class="ti ${m.ic}" style="color:var(${m.col})"></i><div class="label">${escapeHtml(e.name)}</div>
+        <i class="ti ${m.ic}" style="color:${m.col}"></i><div class="label">${escapeHtml(e.name)}</div>
       </div>`;
     }).join("");
     bindRows(gv,".cell");
@@ -474,7 +493,7 @@ function renderDetails(){
     previewHtml=`<div class="textbox" id="textPrev"><span class="muted">${t("loading")}</span></div>`;
     fillText=true;
   } else {
-    previewHtml=`<div class="preview"><i class="ti ${m.ic}" style="color:var(${m.col})"></i></div>`;
+    previewHtml=`<div class="preview"><i class="ti ${m.ic}" style="color:${m.col}"></i></div>`;
   }
 
   // ── property rows ──

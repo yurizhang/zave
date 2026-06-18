@@ -199,7 +199,7 @@ Each request uses an **ArenaAllocator** that is freed as a whole when the reques
 - [x] Right-click context menu
 - [x] Multiple tabs (independent directories)
 - [x] Drag-and-drop to move
-- [ ] Finer file-type icons
+- [x] Finer file-type icons
 
 ---
 
