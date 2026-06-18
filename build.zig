@@ -13,6 +13,13 @@ pub fn build(b: *std.Build) void {
 
     // Native macOS window (WKWebView) — system frameworks only.
     mod.addCSourceFile(.{ .file = b.path("src/macwin.m"), .flags = &.{} });
+    // When cross-compiling (e.g. x86_64 on an arm64 host) Zig can't auto-find
+    // the SDK, so point it at the frameworks/headers explicitly.
+    if (b.option([]const u8, "macos-sdk", "Path to the macOS SDK (for cross builds)")) |sdk| {
+        mod.addSystemFrameworkPath(.{ .cwd_relative = b.fmt("{s}/System/Library/Frameworks", .{sdk}) });
+        mod.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/usr/include", .{sdk}) });
+        mod.addLibraryPath(.{ .cwd_relative = b.fmt("{s}/usr/lib", .{sdk}) });
+    }
     mod.linkFramework("Cocoa", .{});
     mod.linkFramework("WebKit", .{});
 

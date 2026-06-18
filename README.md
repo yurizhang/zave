@@ -1,6 +1,6 @@
 # window-finder
 
-**v1.5.1** · A fast, powerful **Windows 11-style file manager for macOS** — a real Finder replacement, packed into a single dependency-free **Zig 0.16** binary.
+**v1.6.0** · A fast, powerful **Windows 11-style file manager for macOS** — a real Finder replacement, packed into a single dependency-free **Zig 0.16** binary.
 
 > 🇨🇳 中文文档请看 [README.zh.md](README.zh.md)
 
@@ -58,11 +58,15 @@ Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the ch
 
 `zig build run` opens a **native window** (a WKWebView hosting the UI) — no browser needed. Under the hood the HTTP server runs as a child process and the window points at it.
 
-- Build a distributable `.app` (and a `.dmg`):
+- Build a distributable **universal** (arm64 + Intel) `.app` (and a `.dmg`):
   ```bash
   ./packaging/package.sh          # -> dist/window-finder.app
   ./packaging/package.sh --dmg    # -> dist/window-finder.dmg
   ```
+- **Installing a downloaded build:** it is **not code-signed** (no paid Apple
+  Developer account), so the first launch needs **right-click the app → Open →
+  Open** to get past Gatekeeper (only once). Or run
+  `xattr -dr com.apple.quarantine /Applications/window-finder.app`.
 - Prefer the browser instead of a window? Run headless: `HEADLESS=1 zig build run`, then open the printed URL.
 - macOS will ask permission the first time it touches Desktop/Documents/Downloads (normal privacy prompts). Click **Allow**, or grant **Full Disk Access** to window-finder once in System Settings → Privacy & Security.
 
