@@ -137,6 +137,19 @@ body{background:var(--win);color:var(--text)}
 .ctxitem.danger{color:var(--pdf)}
 .ctxitem .ti{font-size:17px;width:18px;text-align:center}
 .ctxsep{height:1px;background:var(--border);margin:5px 6px}
+.ctxitem .val{margin-left:auto;color:var(--faint);font-size:12px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:60}
+.about{width:380px;max-width:90vw;background:var(--content);border:1px solid var(--border-strong);border-radius:14px;box-shadow:0 20px 60px var(--shadow);padding:26px;text-align:center;color:var(--text)}
+.about .logo{font-size:54px;color:var(--accent)}
+.about h2{margin:10px 0 2px;font-size:20px}
+.about .ver{color:var(--muted);font-size:13px;margin-bottom:8px}
+.about p{color:var(--muted);font-size:13px;line-height:1.6;margin:10px 4px}
+.about .links{display:flex;flex-direction:column;gap:8px;margin-top:18px}
+.about .btn{display:flex;align-items:center;justify-content:center;gap:8px;height:38px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;cursor:pointer;border:0}
+.about .btn.gh{background:var(--accent);color:#fff}
+.about .btn.close{background:var(--hover);color:var(--text)}
+.about .btn .ti{font-size:17px}
+.about .meta{margin-top:14px;font-size:11px;color:var(--faint)}
 .row.drop,.cell.drop,.snode.drop,.crumb.drop{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
 .row[draggable],.cell[draggable]{-webkit-user-drag:element}
 </style>
@@ -148,8 +161,7 @@ body{background:var(--win);color:var(--text)}
     <div class="tabs" id="tabbar"></div>
     <div class="newtab" id="newTabBtn" data-i18n-title="newTabTitle"><i class="ti ti-plus"></i></div>
     <div class="spacer"></div>
-    <div class="wbtn" id="langBtn" data-i18n-title="lang">中</div>
-    <div class="wbtn" id="themeBtn" data-i18n-title="theme"><i class="ti ti-moon"></i></div>
+    <div class="wbtn" id="menuBtn" data-i18n-title="menu"><i class="ti ti-dots-vertical" style="font-size:18px"></i></div>
   </div>
 
   <div class="cmdbar">
@@ -239,6 +251,9 @@ const I18N = {
     mZip:"Compress to ZIP", mUnzip:"Extract here", zipped:"Compressed", unzipped:"Extracted",
     selectedN:(n)=>n+" selected", deleteN:(n)=>"Delete "+n+" items?", itemsSelected:(n)=>n+" items selected", total:"Total size",
     mTerminal:"Open in Terminal", terminalOpened:"Opened in Terminal",
+    menu:"Menu", menuLanguage:"Language", menuTheme:"Theme", themeLight:"Light", themeDark:"Dark", about:"About",
+    aboutDesc:"A lightweight Windows 11-style file manager — a Finder replacement that shows and copies full paths.",
+    aboutGithub:"View on GitHub", aboutClose:"Close", aboutBuilt:"Built with Zig 0.16 · a single dependency-free binary · MIT",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -270,8 +285,12 @@ const I18N = {
     mZip:"压缩为 ZIP", mUnzip:"解压到此处", zipped:"已压缩", unzipped:"已解压",
     selectedN:(n)=>"已选择 "+n+" 项", deleteN:(n)=>"删除 "+n+" 个项目?", itemsSelected:(n)=>"已选择 "+n+" 项", total:"总大小",
     mTerminal:"用命令行打开", terminalOpened:"已在终端打开",
+    menu:"菜单", menuLanguage:"语言", menuTheme:"主题", themeLight:"浅色", themeDark:"深色", about:"关于",
+    aboutDesc:"一个轻量的 Windows 11 风格文件管理器 —— 能直接查看并复制完整路径的 Finder 替代品。",
+    aboutGithub:"在 GitHub 查看", aboutClose:"关闭", aboutBuilt:"用 Zig 0.16 构建 · 单个零依赖二进制 · MIT",
   },
 };
+const APP_VERSION = "1.4.0";
 let lang = "en";
 const t = (k) => I18N[lang][k];
 
@@ -362,7 +381,6 @@ async function copyText(text){
 function applyStatic(){
   document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
   document.querySelectorAll("[data-i18n-title]").forEach(el=>el.title=t(el.dataset.i18nTitle));
-  $("#langBtn").textContent = lang==="en" ? "中" : "EN";
   document.documentElement.lang = lang==="en" ? "en" : "zh-CN";
 }
 
@@ -837,21 +855,49 @@ function applyLang(l){
   try{ localStorage.setItem("fm-lang",lang); }catch{}
   applyStatic(); setSearchPlaceholder(); buildSide(); buildCrumbs(); render();
 }
-$("#langBtn").onclick=()=>applyLang(lang==="en"?"zh":"en");
 (function(){ let l="en"; try{ l=localStorage.getItem("fm-lang")||"en"; }catch{} lang=(l==="zh"?"zh":"en"); })();
 
 // theme (persisted)
 function applyTheme(dark){
   document.documentElement.classList.toggle("dark",dark);
-  $("#themeBtn").querySelector("i").className="ti "+(dark?"ti-sun":"ti-moon");
   try{ localStorage.setItem("fm-theme",dark?"dark":"light"); }catch{}
 }
-$("#themeBtn").onclick=()=>applyTheme(!document.documentElement.classList.contains("dark"));
 (function(){ let th="light"; try{ th=localStorage.getItem("fm-theme")||"light"; }catch{} applyTheme(th==="dark"); })();
+
+// ───────── top-right menu + About ─────────
+function openAppMenu(ev){
+  const dark=document.documentElement.classList.contains("dark");
+  showMenu(ev.clientX, ev.clientY, [
+    {icon:"ti-language", label:t("menuLanguage")+`<span class="val">${lang==="en"?"English":"中文"}</span>`, action:()=>applyLang(lang==="en"?"zh":"en")},
+    {icon:dark?"ti-moon":"ti-sun", label:t("menuTheme")+`<span class="val">${dark?t("themeDark"):t("themeLight")}</span>`, action:()=>applyTheme(!document.documentElement.classList.contains("dark"))},
+    {sep:true},
+    {icon:"ti-info-circle", label:t("about"), action:showAbout},
+  ]);
+}
+function showAbout(){
+  closeAbout();
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="aboutOverlay";
+  ov.innerHTML=`<div class="about">
+    <div class="logo"><i class="ti ti-folder"></i></div>
+    <h2>window-finder</h2>
+    <div class="ver">v${APP_VERSION}</div>
+    <p>${t("aboutDesc")}</p>
+    <div class="links">
+      <a class="btn gh" href="https://github.com/yurizhang/window-finder" target="_blank" rel="noopener"><i class="ti ti-brand-github"></i>${t("aboutGithub")}</a>
+      <button class="btn close" id="aboutCloseBtn"><i class="ti ti-x"></i>${t("aboutClose")}</button>
+    </div>
+    <div class="meta">${t("aboutBuilt")}</div>
+  </div>`;
+  ov.onclick=(e)=>{ if(e.target===ov) closeAbout(); };
+  document.body.appendChild(ov);
+  $("#aboutCloseBtn").onclick=closeAbout;
+}
+function closeAbout(){ const o=$("#aboutOverlay"); if(o) o.remove(); }
+$("#menuBtn").onclick=(ev)=>{ ev.stopPropagation(); openAppMenu(ev); };
 
 // keyboard shortcuts
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape") closeMenu();
+  if(e.key==="Escape"){ closeMenu(); closeAbout(); }
   if(e.target.tagName==="INPUT"){ if(e.key==="Escape"){ e.target.value=""; filterText=""; render(); e.target.blur(); } return; }
   const mod=e.metaKey||e.ctrlKey;
   if(mod&&e.key==="a"){ e.preventDefault(); selectAll(); }
