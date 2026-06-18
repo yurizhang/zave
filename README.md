@@ -54,6 +54,18 @@ The server listens on `127.0.0.1:9781` (local-only, safe).
 
 Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the chosen port is busy, the server automatically tries the next ones. The port can also be changed from **Settings ⚙ → System settings** in the UI, which saves it and restarts the app on the new port.
 
+### Desktop app
+
+`zig build run` opens a **native window** (a WKWebView hosting the UI) — no browser needed. Under the hood the HTTP server runs as a child process and the window points at it.
+
+- Build a distributable `.app` (and a `.dmg`):
+  ```bash
+  ./packaging/package.sh          # -> dist/window-finder.app
+  ./packaging/package.sh --dmg    # -> dist/window-finder.dmg
+  ```
+- Prefer the browser instead of a window? Run headless: `HEADLESS=1 zig build run`, then open the printed URL.
+- macOS will ask permission the first time it touches Desktop/Documents/Downloads (normal privacy prompts). Click **Allow**, or grant **Full Disk Access** to window-finder once in System Settings → Privacy & Security.
+
 ### How to use
 
 - **Single-click** a row to select it; **double-click** a folder to enter it.

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>window-finder</string>
+    <key>CFBundleDisplayName</key>
+    <string>window-finder</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.yurizhang.window-finder</string>
+    <key>CFBundleExecutable</key>
+    <string>window-finder</string>
+    <key>CFBundleVersion</key>
+    <string>1.5.2</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.5.2</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleIconFile</key>
+    <string>icon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>11.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>window-finder needs access to browse and manage files on your Desktop.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>window-finder needs access to browse and manage files in your Documents.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>window-finder needs access to browse and manage files in your Downloads.</string>
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>window-finder needs access to browse files on removable volumes.</string>
+    <key>NSNetworkVolumesUsageDescription</key>
+    <string>window-finder needs access to browse files on network volumes.</string>
+</dict>
+</plist>

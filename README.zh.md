@@ -54,6 +54,18 @@ zig build
 
 用环境变量 `PORT` 指定端口(`PORT=9000 zig build run`);若端口被占用,会自动顺延到下一个空闲端口。 也可在界面里 **⚙ 设置 → 系统配置** 修改端口,保存后会自动重启并切换到新端口。
 
+### 桌面 App
+
+`zig build run` 会打开一个**原生窗口**(WKWebView 承载界面),不需要浏览器。底层 HTTP 服务作为子进程运行,窗口指向它。
+
+- 打包成可分发的 `.app`(和 `.dmg`):
+  ```bash
+  ./packaging/package.sh          # -> dist/window-finder.app
+  ./packaging/package.sh --dmg    # -> dist/window-finder.dmg
+  ```
+- 想用浏览器而不是窗口?跑无头模式:`HEADLESS=1 zig build run`,再打开打印出的地址。
+- 首次访问 桌面/文稿/下载 时 macOS 会弹权限请求(正常的隐私机制),点**允许**即可;或在 系统设置 → 隐私与安全性 → 完全磁盘访问权限 里给 window-finder 一次性授权。
+
 ### 怎么用
 
 - **单击**选中一行;**双击文件夹**进入。

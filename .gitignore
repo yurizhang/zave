@@ -4,3 +4,8 @@ zig-out/
 
 # macOS
 .DS_Store
+
+# build / packaging output
+dist/
+packaging/icon_1024.png
+packaging/icon.iconset/

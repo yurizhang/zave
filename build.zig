@@ -4,14 +4,21 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const mod = b.createModule(.{
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true, // for std.c.getenv to read $HOME
+    });
+
+    // Native macOS window (WKWebView) — system frameworks only.
+    mod.addCSourceFile(.{ .file = b.path("src/macwin.m"), .flags = &.{} });
+    mod.linkFramework("Cocoa", .{});
+    mod.linkFramework("WebKit", .{});
+
     const exe = b.addExecutable(.{
         .name = "filemanager",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-            .link_libc = true, // for std.c.getenv to read $HOME
-        }),
+        .root_module = mod,
     });
 
     b.installArtifact(exe);

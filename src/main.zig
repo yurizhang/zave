@@ -3,6 +3,10 @@ const Io = std.Io;
 const net = std.Io.net;
 const http = std.http;
 
+/// Native macOS window hosting a WKWebView (implemented in src/macwin.m).
+extern fn openWebview(url: [*:0]const u8, title: [*:0]const u8, child_pid: c_int) void;
+extern "c" fn setenv(name: [*:0]const u8, value: [*:0]const u8, overwrite: c_int) c_int;
+
 const index_html = @embedFile("index.html");
 const tabler_css = @embedFile("assets/tabler-icons.min.css");
 const tabler_woff2 = @embedFile("assets/fonts/tabler-icons.woff2");
@@ -61,10 +65,23 @@ const json_ct: []const http.Header = &.{.{ .name = "content-type", .value = "app
 pub fn main() !void {
     const gpa = std.heap.page_allocator;
 
+    // Decide mode before creating the Io instance: with HEADLESS set we are the
+    // server child; otherwise we are the window host and must make sure the
+    // child we spawn inherits HEADLESS.
+    const headless = std.c.getenv("HEADLESS") != null;
+    if (!headless) _ = setenv("HEADLESS", "1", 1);
+
     var threaded: Io.Threaded = .init(gpa, .{ .environ = currentEnviron() });
     defer threaded.deinit();
     const io = threaded.io();
 
+    if (headless) return runServer(io, gpa);
+    try runHost(io, gpa);
+}
+
+/// Server process: bind a port and serve forever on the main thread.
+/// (Cocoa-free, so the Threaded I/O behaves normally.)
+fn runServer(io: Io, gpa: std.mem.Allocator) void {
     const want = resolvePort(io);
     var port: u16 = want;
     var server = while (port < want +| 20) : (port += 1) {
@@ -72,27 +89,61 @@ pub fn main() !void {
         if (addr.listen(io, .{})) |s| {
             break s;
         } else |err| switch (err) {
-            error.AddressInUse => {
-                std.debug.print("Port {d} is in use, trying {d}…\n", .{ port, port + 1 });
-                continue;
+            error.AddressInUse => continue,
+            else => {
+                std.debug.print("listen error: {s}\n", .{@errorName(err)});
+                return;
             },
-            else => return err,
         }
     } else {
-        std.debug.print("No free port found from {d}–{d}. Set PORT to a free one.\n", .{ want, want +| 19 });
-        return error.AddressInUse;
+        std.debug.print("No free port found from {d}–{d}.\n", .{ want, want +| 19 });
+        return;
     };
     defer server.deinit(io);
 
+    // The host parses this line to learn the chosen port.
     std.debug.print("File manager started → http://127.0.0.1:{d}\n", .{port});
 
     while (true) {
-        const stream = server.accept(io) catch |err| {
-            std.debug.print("accept error: {s}\n", .{@errorName(err)});
-            continue;
-        };
+        const stream = server.accept(io) catch continue;
         handleConn(io, gpa, stream);
     }
+}
+
+/// Host process: spawn the server child, learn its port from the child's
+/// stdout, then open the native window pointing at it.
+fn runHost(io: Io, gpa: std.mem.Allocator) !void {
+    _ = gpa;
+    var exe_buf: [4096]u8 = undefined;
+    const exe_len = try std.process.executablePath(io, &exe_buf);
+    const exe = exe_buf[0..exe_len];
+
+    // The child logs its "started → …:PORT" line on stderr (std.debug.print),
+    // so pipe stderr and read one line from it.
+    const child = try std.process.spawn(io, .{ .argv = &.{exe}, .stderr = .pipe });
+    const out = child.stderr orelse return error.NoChildStderr;
+
+    var rbuf: [512]u8 = undefined;
+    var reader = out.reader(io, &rbuf);
+    const line = reader.interface.takeDelimiterExclusive('\n') catch "";
+    const port = parsePort(line) orelse default_port;
+
+    var url_buf: [64]u8 = undefined;
+    const url = std.fmt.bufPrintZ(&url_buf, "http://127.0.0.1:{d}/", .{port}) catch unreachable;
+    std.debug.print("window-finder → {s}\n", .{url});
+
+    openWebview(url.ptr, "window-finder", @intCast(child.id orelse 0));
+}
+
+/// Extract the port from "…127.0.0.1:<port>…".
+fn parsePort(s: []const u8) ?u16 {
+    const marker = "127.0.0.1:";
+    const at = std.mem.indexOf(u8, s, marker) orelse return null;
+    const i = at + marker.len;
+    var end = i;
+    while (end < s.len and s[end] >= '0' and s[end] <= '9') : (end += 1) {}
+    if (end == i) return null;
+    return std.fmt.parseInt(u16, s[i..end], 10) catch null;
 }
 
 fn handleConn(io: Io, gpa: std.mem.Allocator, stream: net.Stream) void {
