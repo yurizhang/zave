@@ -37,10 +37,19 @@ And the whole backend is **pure Zig** — no third-party dependencies, only the 
 
 ## 🚀 Quick Start
 
+### Just use it (no build) — recommended
+
+1. Download **window-finder.zip** from the [latest release](https://github.com/yurizhang/window-finder/releases/latest).
+2. **Double-click to unzip**, then **right-click `window-finder` → Open → Open**.
+
+> ⚠️ The first launch **must** be **right-click → Open** (not a double-click). The app isn't code-signed, so a plain double-click shows *"cannot be opened"* — right-click → Open gets past Gatekeeper, and it's only needed once. It runs from wherever you unzipped it (no need to move it to Applications). Universal — works on Apple Silicon and Intel.
+
+### Build from source
+
 Requirements: **Zig 0.16.0**
 
 ```bash
-# Build and run
+# Build and run (opens a native window)
 zig build run
 
 # Or in two steps

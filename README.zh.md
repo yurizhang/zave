@@ -37,10 +37,19 @@
 
 ## 🚀 快速开始
 
+### 直接使用(免编译,推荐)
+
+1. 从 [最新 Release](https://github.com/yurizhang/window-finder/releases/latest) 下载 **window-finder.zip**。
+2. **双击解压**,然后 **右键 `window-finder` → 打开 → 打开**。
+
+> ⚠️ 首次**一定要用「右键 → 打开」**,不要直接双击。App 没做代码签名,直接双击会提示*「无法打开」*;右键 → 打开即可绕过 Gatekeeper,**只需一次**。在哪解压就在哪运行(无需拖进应用程序)。通用版,Apple 芯片和 Intel 都能跑。
+
+### 从源码构建
+
 环境要求:**Zig 0.16.0**
 
 ```bash
-# 编译并运行
+# 编译并运行(打开原生窗口)
 zig build run
 
 # 或者分两步
