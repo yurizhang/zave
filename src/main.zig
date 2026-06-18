@@ -7,8 +7,8 @@ const index_html = @embedFile("index.html");
 const tabler_css = @embedFile("assets/tabler-icons.min.css");
 const tabler_woff2 = @embedFile("assets/fonts/tabler-icons.woff2");
 
-/// Default port; overridable via the PORT environment variable.
-const default_port: u16 = 8080;
+/// Default port (uncommon, so unlikely to clash); overridable via PORT or the UI.
+const default_port: u16 = 9781;
 
 /// Max bytes served by /api/file (cap so a huge file can't exhaust memory).
 const max_file = 16 * 1024 * 1024;

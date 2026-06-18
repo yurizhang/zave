@@ -48,9 +48,9 @@ zig build
 ./zig-out/bin/filemanager
 ```
 
-启动后访问:**http://127.0.0.1:8080**
+启动后访问:**http://127.0.0.1:9781**
 
-服务默认监听 `127.0.0.1:8080`(只对本机开放,安全)。
+服务默认监听 `127.0.0.1:9781`(只对本机开放,安全)。
 
 用环境变量 `PORT` 指定端口(`PORT=9000 zig build run`);若端口被占用,会自动顺延到下一个空闲端口。 也可在界面里 **⚙ 设置 → 系统配置** 修改端口,保存后会自动重启并切换到新端口。
 
@@ -79,7 +79,7 @@ window-finder/
 ## 🏗️ 架构
 
 ```
-浏览器                          Zig 后端 (127.0.0.1:8080)
+浏览器                          Zig 后端 (127.0.0.1:9781)
   │                                    │
   │  GET /                             │
   ├───────────────────────────────────▶  返回内嵌的 index.html
@@ -173,7 +173,7 @@ var threaded: std.Io.Threaded = .init(gpa, .{});
 const io = threaded.io();
 
 // 网络监听
-var addr = try std.Io.net.IpAddress.parse("127.0.0.1", 8080);
+var addr = try std.Io.net.IpAddress.parse("127.0.0.1", 9781);
 var server = try addr.listen(io, .{ .reuse_address = true });
 const stream = try server.accept(io);
 

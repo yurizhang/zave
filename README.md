@@ -48,9 +48,9 @@ zig build
 ./zig-out/bin/filemanager
 ```
 
-Then open: **http://127.0.0.1:8080**
+Then open: **http://127.0.0.1:9781**
 
-The server listens on `127.0.0.1:8080` (local-only, safe).
+The server listens on `127.0.0.1:9781` (local-only, safe).
 
 Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the chosen port is busy, the server automatically tries the next ones. The port can also be changed from **Settings ⚙ → System settings** in the UI, which saves it and restarts the app on the new port.
 
@@ -79,7 +79,7 @@ window-finder/
 ## 🏗️ Architecture
 
 ```
-Browser                          Zig backend (127.0.0.1:8080)
+Browser                          Zig backend (127.0.0.1:9781)
   │                                    │
   │  GET /                             │
   ├───────────────────────────────────▶  returns the embedded index.html
@@ -173,7 +173,7 @@ var threaded: std.Io.Threaded = .init(gpa, .{});
 const io = threaded.io();
 
 // Networking
-var addr = try std.Io.net.IpAddress.parse("127.0.0.1", 8080);
+var addr = try std.Io.net.IpAddress.parse("127.0.0.1", 9781);
 var server = try addr.listen(io, .{ .reuse_address = true });
 const stream = try server.accept(io);
 
