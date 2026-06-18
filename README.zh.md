@@ -39,10 +39,11 @@
 
 ### 直接使用(免编译,推荐)
 
-1. 从 [最新 Release](https://github.com/yurizhang/window-finder/releases/latest) 下载 **window-finder.zip**。
-2. **双击解压**,然后 **右键 `window-finder` → 打开 → 打开**。
+1. 从 [最新 Release](https://github.com/yurizhang/window-finder/releases/latest) 下载 **window-finder.zip**,**双击解压**。
+2. 双击 `window-finder`,系统提示*「无法打开」*——点 **完成 / Done**(因为没做代码签名)。
+3. 打开 **系统设置 → 隐私与安全性**,往下滚到*「已阻止使用 window-finder…」*,点 **仍要打开 / Open Anyway**,再打开 App 并确认。
 
-> ⚠️ 首次**一定要用「右键 → 打开」**,不要直接双击。App 没做代码签名,直接双击会提示*「无法打开」*;右键 → 打开即可绕过 Gatekeeper,**只需一次**。在哪解压就在哪运行(无需拖进应用程序)。通用版,Apple 芯片和 Intel 都能跑。
+> ⚠️ **macOS 15+(Sequoia/Tahoe 26)已取消「右键 → 打开」**,必须走 **系统设置 → 隐私与安全性 → 仍要打开**,只需一次。开发者也可直接执行 `xattr -dr com.apple.quarantine window-finder.app`。在哪解压在哪跑;通用版,Apple 芯片和 Intel 都能跑。
 
 ### 从源码构建
 
@@ -73,7 +74,7 @@ zig build
   ./packaging/package.sh --zip          # -> dist/window-finder.zip
   ./packaging/package.sh --zip --dmg    # 两个都要
   ```
-- **下载安装说明**:App **未做代码签名**(没有付费 Apple 开发者账号)。最省事的是 **`.zip`**:双击解压,然后**右键 window-finder → 打开 → 打开**(在哪解压就在哪跑,不用拖动),只需一次。(或执行 `xattr -dr com.apple.quarantine window-finder.app`。)
+- **下载安装说明**:App **未做代码签名**(没有付费 Apple 开发者账号)。macOS 15+(Sequoia/Tahoe):双击 → **完成**,再去 **系统设置 → 隐私与安全性 → 仍要打开**。(开发者可直接 `xattr -dr com.apple.quarantine window-finder.app`。)
 - 想用浏览器而不是窗口?跑无头模式:`HEADLESS=1 zig build run`,再打开打印出的地址。
 - 首次访问 桌面/文稿/下载 时 macOS 会弹权限请求(正常的隐私机制),点**允许**即可;或在 系统设置 → 隐私与安全性 → 完全磁盘访问权限 里给 window-finder 一次性授权。
 

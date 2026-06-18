@@ -39,10 +39,11 @@ And the whole backend is **pure Zig** — no third-party dependencies, only the 
 
 ### Just use it (no build) — recommended
 
-1. Download **window-finder.zip** from the [latest release](https://github.com/yurizhang/window-finder/releases/latest).
-2. **Double-click to unzip**, then **right-click `window-finder` → Open → Open**.
+1. Download **window-finder.zip** from the [latest release](https://github.com/yurizhang/window-finder/releases/latest) and **double-click to unzip**.
+2. Double-click `window-finder`. macOS says *"Not Opened"* — click **Done** (the app isn't code-signed).
+3. Open **System Settings → Privacy & Security**, scroll down to *"window-finder was blocked…"*, click **Open Anyway**, then open the app again and confirm.
 
-> ⚠️ The first launch **must** be **right-click → Open** (not a double-click). The app isn't code-signed, so a plain double-click shows *"cannot be opened"* — right-click → Open gets past Gatekeeper, and it's only needed once. It runs from wherever you unzipped it (no need to move it to Applications). Universal — works on Apple Silicon and Intel.
+> ⚠️ The old "right-click → Open" trick **no longer works on macOS 15+ (Sequoia/Tahoe)** — you must use **System Settings → Privacy & Security → Open Anyway**. Only needed once. Developers can instead run `xattr -dr com.apple.quarantine window-finder.app`. Runs from anywhere; universal (Apple Silicon + Intel).
 
 ### Build from source
 
@@ -74,9 +75,9 @@ Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the ch
   ./packaging/package.sh --zip --dmg    # both
   ```
 - **Installing a downloaded build:** the app is **not code-signed** (no paid
-  Apple Developer account). Easiest is the **`.zip`**: double-click to unzip,
-  then **right-click window-finder → Open → Open** (runs from anywhere — no
-  need to move it). Only needed once. (Or `xattr -dr com.apple.quarantine window-finder.app`.)
+  Apple Developer account). On macOS 15+ (Sequoia/Tahoe): double-click → **Done**,
+  then **System Settings → Privacy & Security → Open Anyway**. (Developers:
+  `xattr -dr com.apple.quarantine window-finder.app`.)
 - Prefer the browser instead of a window? Run headless: `HEADLESS=1 zig build run`, then open the printed URL.
 - macOS will ask permission the first time it touches Desktop/Documents/Downloads (normal privacy prompts). Click **Allow**, or grant **Full Disk Access** to window-finder once in System Settings → Privacy & Security.
 
