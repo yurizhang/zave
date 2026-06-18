@@ -309,7 +309,6 @@ const I18N = {
 const APP_VERSION = "1.7.0";
 const NOTICE_URL = "https://raw.githubusercontent.com/yurizhang/window-finder/main/notice.json";
 let notice = null;            // latest fetched notice (with non-empty id)
-let noticeToastedId = "";     // avoid re-toasting the same notice this session
 let lang = "zh";
 const t = (k) => I18N[lang][k];
 
@@ -387,9 +386,11 @@ function meta(e){
   return {ic:"ti-file", col:"var(--faint)", tl: ex ? ex.toUpperCase()+t("fileSuffix") : t("file")};
 }
 
-function toast(msg, bad){
+let toastTimer=null;
+function toast(msg, bad, ms){
   const el=$("#toast"); el.textContent=msg; el.className="toast show"+(bad?" bad":"");
-  setTimeout(()=>el.className="toast",1600);
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.className="toast", ms||1600);
 }
 async function copyText(text){
   try{ await navigator.clipboard.writeText(text); toast(t("pathCopied")+text); }
@@ -910,10 +911,11 @@ async function fetchNotice(){
     const d=await r.json();
     notice=(d&&d.id)?d:null;
     if(noticeUnseen()){
-      $("#menuBtn").classList.add("hasdot");
-      if(noticeToastedId!==notice.id){           // toast once per notice per session
-        noticeToastedId=notice.id;
-        toast((notice.title?notice.title+": ":"")+(notice.message||""), notice.level==="critical"||notice.level==="warning");
+      $("#menuBtn").classList.add("hasdot");          // red dot until opened
+      let toasted=""; try{ toasted=localStorage.getItem("fm-notice-toasted")||""; }catch{}
+      if(toasted!==notice.id){                          // toast at most once, ever
+        try{ localStorage.setItem("fm-notice-toasted",notice.id); }catch{}
+        toast((notice.title?notice.title+": ":"")+(notice.message||""), notice.level==="critical"||notice.level==="warning", 6000);
       }
     } else {
       $("#menuBtn").classList.remove("hasdot");

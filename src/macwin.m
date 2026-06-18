@@ -68,6 +68,17 @@ static int g_child_pid = 0;
         completionHandler(nil);
     }
 }
+
+// target="_blank" links: open in the user's default browser (WKWebView would
+// otherwise ignore them).
+- (WKWebView *)webView:(WKWebView *)webView
+        createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
+        forNavigationAction:(WKNavigationAction *)navigationAction
+        windowFeatures:(WKWindowFeatures *)windowFeatures {
+    NSURL *url = navigationAction.request.URL;
+    if (url) [[NSWorkspace sharedWorkspace] openURL:url];
+    return nil;
+}
 @end
 
 void openWebview(const char *url, const char *title, int childPid) {

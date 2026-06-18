@@ -1,7 +1,7 @@
 {
-  "id": "test-2026-06-18",
+  "id": "test-2026-06-18b",
   "level": "warning",
-  "title": "测试通知",
-  "message": "这是一条测试公告 —— 如果你看到它,说明远程通知功能正常工作!点这里旁边的齿轮 ⚙ → 通知 可查看详情。",
+  "title": "测试通知 2",
+  "message": "再测一次:toast 现在停留更久了,「查看详情」也能用默认浏览器打开链接。确认 OK 后我就清掉公告。",
   "url": "https://github.com/yurizhang/window-finder/releases/latest"
 }
