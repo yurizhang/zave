@@ -102,6 +102,7 @@ body{background:var(--win);color:var(--text)}
 .textbox{max-height:260px;overflow:auto;background:var(--side);border-radius:9px;margin-bottom:14px;padding:10px 12px}
 .textbox pre{margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:var(--text)}
 .textbox .muted{color:var(--faint)}
+.pdfbox{width:100%;height:320px;border:0;border-radius:9px;background:var(--side);margin-bottom:14px}
 .openbtn{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:16px;width:100%;height:36px;border-radius:7px;background:var(--accent);color:#fff;border:0;font-size:13px;font-weight:600;cursor:pointer}
 .openbtn:hover{filter:brightness(1.08)}
 .openbtn .ti{font-size:16px}
@@ -289,7 +290,7 @@ const TYPE_MAP = {
 };
 const IMG_EXT = new Set(["png","jpg","jpeg","gif","webp","svg","bmp","ico"]);
 const TEXT_EXT = new Set(["txt","md","markdown","log","csv","tsv","json","js","mjs","cjs","ts","jsx","tsx","css","scss","less","html","htm","xml","yaml","yml","toml","ini","conf","cfg","env","c","h","cpp","cc","hpp","cxx","m","mm","py","sh","bash","zsh","zig","rs","go","java","kt","rb","php","sql","vue","svelte","lua","pl","r","swift","gradle","properties","gitignore","dockerfile","makefile"]);
-const IMG_MAX = 8*1024*1024, TEXT_MAX = 1024*1024;
+const IMG_MAX = 8*1024*1024, TEXT_MAX = 1024*1024, PDF_MAX = 16*1024*1024;
 
 function meta(e){
   if(e.kind==="directory") return {ic:"ti-folder", col:"--folder", tl:t("folder")};
@@ -433,7 +434,9 @@ function renderDetails(){
 
   // ── preview area ──
   let previewHtml, fillText=false;
-  if(isFile && IMG_EXT.has(ex) && e.size<=IMG_MAX){
+  if(isFile && ex==="pdf" && e.size<=PDF_MAX){
+    previewHtml=`<iframe class="pdfbox" src="${url}#toolbar=0" title="${escapeHtml(e.name)}"></iframe>`;
+  } else if(isFile && IMG_EXT.has(ex) && e.size<=IMG_MAX){
     previewHtml=`<div class="preview"><img src="${url}" alt=""></div>`;
   } else if(isFile && (TEXT_EXT.has(ex) || ex==="") && e.size<=TEXT_MAX){
     previewHtml=`<div class="textbox" id="textPrev"><span class="muted">${t("loading")}</span></div>`;
