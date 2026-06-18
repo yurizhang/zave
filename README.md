@@ -1,12 +1,12 @@
 # window-finder
 
-**v1.0** · A lightweight local file manager written in **Zig 0.16**. The backend is a pure-Zig HTTP server; the frontend is a Windows 11-style browser UI.
+**v1.5.1** · A fast, powerful **Windows 11-style file manager for macOS** — a real Finder replacement, packed into a single dependency-free **Zig 0.16** binary.
 
 > 🇨🇳 中文文档请看 [README.zh.md](README.zh.md)
 
-The motivation is simple: macOS Finder is awkward — you can't see the full path, and copying a path is a hassle. This project builds a file browser that works **like Windows Explorer** — showing and copying the full path directly — while serving as a hands-on way to learn Zig 0.16's new I/O API.
+Let's be honest: macOS Finder is clunky. You can't see the full path, copying a path is a chore, and it's slower than it has any right to be. **window-finder** fixes all of that — a snappy, Windows 11-style file manager that shows and copies the full path instantly, with tabs, multi-select, live preview, ZIP, drag-and-drop, "open in Terminal" and a lot more. It does more than Finder, gets out of your way faster, and ships as one tiny self-contained binary.
 
-> No third-party dependencies — only the Zig standard library.
+And the whole backend is **pure Zig** — no third-party dependencies, only the standard library — so it doubles as a hands-on tour of Zig 0.16's new I/O API.
 
 ---
 
