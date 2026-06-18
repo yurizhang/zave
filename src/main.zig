@@ -70,6 +70,8 @@ fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     if (std.mem.startsWith(u8, target, "/api/mkdir")) return handleMkdir(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/file")) return handleFile(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/open")) return handleOpen(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/zip")) return handleZip(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/unzip")) return handleUnzip(io, gpa, req, target);
 
     if (std.mem.startsWith(u8, target, "/assets/fonts/tabler-icons.woff2")) {
         return req.respond(tabler_woff2, .{
@@ -314,6 +316,82 @@ fn doOpen(io: Io, path: []const u8) !void {
 
     var child = try std.process.spawn(io, .{ .argv = &.{ "/usr/bin/open", path } });
     _ = try child.wait(io);
+}
+
+// ───────────────────────── compress / extract (zip) ─────────────────────────
+
+fn handleZip(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const path = try percentDecode(arena, queryParam(target, "path") orelse "");
+    doZip(io, arena, path) catch |err| return respondErr(req, arena, err);
+    try respondOk(req);
+}
+
+fn doZip(io: Io, arena: std.mem.Allocator, path: []const u8) !void {
+    if (path.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
+
+    const parent = std.fs.path.dirname(path) orelse return error.NoParent;
+    const name = std.fs.path.basename(path);
+    // <path>.zip, made unique if it already exists
+    const archive = try uniquePath(io, arena, try std.fmt.allocPrint(arena, "{s}.zip", .{path}));
+    const archive_name = std.fs.path.basename(archive);
+
+    // run inside the parent dir so stored paths are relative (clean archive)
+    var child = try std.process.spawn(io, .{
+        .argv = &.{ "/usr/bin/zip", "-r", "-q", archive_name, name },
+        .cwd = .{ .path = parent },
+    });
+    const term = try child.wait(io);
+    if (term != .exited or term.exited != 0) return error.ZipFailed;
+}
+
+fn handleUnzip(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const path = try percentDecode(arena, queryParam(target, "path") orelse "");
+    doUnzip(io, arena, path) catch |err| return respondErr(req, arena, err);
+    try respondOk(req);
+}
+
+fn doUnzip(io: Io, arena: std.mem.Allocator, path: []const u8) !void {
+    if (path.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
+
+    const parent = std.fs.path.dirname(path) orelse return error.NoParent;
+    const stem = std.fs.path.stem(std.fs.path.basename(path));
+    // extract into <parent>/<stem>/, made unique if it already exists
+    const dest = try uniquePath(io, arena, try std.fmt.allocPrint(arena, "{s}/{s}", .{ parent, stem }));
+
+    var child = try std.process.spawn(io, .{
+        .argv = &.{ "/usr/bin/unzip", "-q", path, "-d", dest },
+    });
+    const term = try child.wait(io);
+    if (term != .exited or term.exited != 0) return error.UnzipFailed;
+}
+
+/// Returns `base` if it does not exist, otherwise inserts " N" before the
+/// extension until a free name is found.
+fn uniquePath(io: Io, arena: std.mem.Allocator, base: []const u8) ![]const u8 {
+    if (!pathExists(io, base)) return base;
+    const ext = std.fs.path.extension(base);
+    const stem = base[0 .. base.len - ext.len];
+    var i: u32 = 2;
+    while (i < 1000) : (i += 1) {
+        const cand = try std.fmt.allocPrint(arena, "{s} {d}{s}", .{ stem, i, ext });
+        if (!pathExists(io, cand)) return cand;
+    }
+    return error.TooManyCollisions;
+}
+
+fn pathExists(io: Io, path: []const u8) bool {
+    _ = Io.Dir.cwd().statFile(io, path, .{}) catch return false;
+    return true;
 }
 
 // ───────────────────────── shared responses ─────────────────────────

@@ -236,6 +236,7 @@ const I18N = {
     openWith:"Open with default app", opened:"Opened", openFailed:"Open failed", previewEmpty:"(empty file)", loading:"Loading…",
     mOpen:"Open", mCut:"Cut", mCopy:"Copy", mPaste:"Paste", mRename:"Rename", mDelete:"Delete", mCopyPath:"Copy path", mNewFolder:"New folder", mRefresh:"Refresh",
     newTabTitle:"New tab", mOpenNewTab:"Open in new tab",
+    mZip:"Compress to ZIP", mUnzip:"Extract here", zipped:"Compressed", unzipped:"Extracted",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -264,6 +265,7 @@ const I18N = {
     openWith:"用默认程序打开", opened:"已打开", openFailed:"打开失败", previewEmpty:"(空文件)", loading:"加载中…",
     mOpen:"打开", mCut:"剪切", mCopy:"复制", mPaste:"粘贴", mRename:"重命名", mDelete:"删除", mCopyPath:"复制路径", mNewFolder:"新建文件夹", mRefresh:"刷新",
     newTabTitle:"新建标签页", mOpenNewTab:"在新标签页打开",
+    mZip:"压缩为 ZIP", mUnzip:"解压到此处", zipped:"已压缩", unzipped:"已解压",
   },
 };
 let lang = "en";
@@ -577,6 +579,9 @@ function itemMenu(x,y,e){
     {sep:true},
     {icon:"ti-pencil", label:t("mRename"), action:doRename},
     {icon:"ti-link", label:t("mCopyPath"), action:()=>copyText(full)},
+    {sep:true},
+    {icon:"ti-file-zip", label:t("mZip"), action:doZip},
+    ...(ext(e.name)==="zip" ? [{icon:"ti-file-export", label:t("mUnzip"), action:doUnzip}] : []),
     {icon:"ti-trash", label:t("mDelete"), action:doDelete, danger:true},
   ]);
 }
@@ -714,6 +719,14 @@ async function doDelete(){
   if(!confirm(t("deleteConfirm")+"\n\n"+join(current,e.name)+(e.kind==="directory"?"\n\n"+t("folderNote"):""))) return;
   const p=join(current,e.name);
   if(await api("/api/delete?path="+encodeURIComponent(p),t("deleted"))){ if(clipboard&&clipboard.path===p) clipboard=null; load(current,true); }
+}
+async function doZip(){
+  const e=selEntry(); if(!e) return;
+  if(await api("/api/zip?path="+encodeURIComponent(join(current,e.name)),t("zipped"))) load(current,true);
+}
+async function doUnzip(){
+  const e=selEntry(); if(!e) return;
+  if(await api("/api/unzip?path="+encodeURIComponent(join(current,e.name)),t("unzipped"))) load(current,true);
 }
 
 // ───────── event bindings ─────────
