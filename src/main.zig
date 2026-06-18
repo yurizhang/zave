@@ -19,14 +19,41 @@ fn homeDir() []const u8 {
     return "/";
 }
 
-/// Starting port: $PORT if set and valid, otherwise `default_port`.
-fn startPort() u16 {
+/// The current process environment, so it is preserved across `process.replace`
+/// (used by the restart-on-port-change flow). Without this, the Threaded I/O
+/// instance defaults to an empty environment and the re-exec'd process would
+/// lose $HOME etc.
+fn currentEnviron() std.process.Environ {
+    const env = std.c.environ;
+    var n: usize = 0;
+    while (env[n] != null) : (n += 1) {}
+    const slice: [:null]const ?[*:0]const u8 = @ptrCast(env[0..n :null]);
+    return .{ .block = .{ .slice = slice } };
+}
+
+/// Absolute path of the persisted port config file (`$HOME/.window-finder-port`).
+fn configPath(buf: []u8) ?[]const u8 {
+    return std.fmt.bufPrint(buf, "{s}/.window-finder-port", .{homeDir()}) catch null;
+}
+
+/// Port saved by the user via /api/config, if any.
+fn readConfigPort(io: Io) ?u16 {
+    var pbuf: [1024]u8 = undefined;
+    const path = configPath(&pbuf) orelse return null;
+    var dbuf: [16]u8 = undefined;
+    const data = Io.Dir.cwd().readFile(io, path, &dbuf) catch return null;
+    const n = std.fmt.parseInt(u16, std.mem.trim(u8, data, " \r\n\t"), 10) catch return null;
+    return if (n != 0) n else null;
+}
+
+/// Starting port: $PORT > saved config > `default_port`.
+fn resolvePort(io: Io) u16 {
     if (std.c.getenv("PORT")) |p| {
         if (std.fmt.parseInt(u16, std.mem.span(p), 10)) |n| {
             if (n != 0) return n;
         } else |_| {}
     }
-    return default_port;
+    return readConfigPort(io) orelse default_port;
 }
 
 const json_ct: []const http.Header = &.{.{ .name = "content-type", .value = "application/json; charset=utf-8" }};
@@ -34,11 +61,11 @@ const json_ct: []const http.Header = &.{.{ .name = "content-type", .value = "app
 pub fn main() !void {
     const gpa = std.heap.page_allocator;
 
-    var threaded: Io.Threaded = .init(gpa, .{});
+    var threaded: Io.Threaded = .init(gpa, .{ .environ = currentEnviron() });
     defer threaded.deinit();
     const io = threaded.io();
 
-    const want = startPort();
+    const want = resolvePort(io);
     var port: u16 = want;
     var server = while (port < want +| 20) : (port += 1) {
         var addr = net.IpAddress.parse("127.0.0.1", port) catch unreachable;
@@ -97,6 +124,8 @@ fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     if (std.mem.startsWith(u8, target, "/api/file")) return handleFile(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/open")) return handleOpen(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/terminal")) return handleTerminal(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/config")) return handleConfig(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/restart")) return handleRestart(io, req);
     if (std.mem.startsWith(u8, target, "/api/zip")) return handleZip(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/unzip")) return handleUnzip(io, gpa, req, target);
 
@@ -437,6 +466,54 @@ fn uniquePath(io: Io, arena: std.mem.Allocator, base: []const u8) ![]const u8 {
 fn pathExists(io: Io, path: []const u8) bool {
     _ = Io.Dir.cwd().statFile(io, path, .{}) catch return false;
     return true;
+}
+
+// ───────────────────────── settings (persisted port) ─────────────────────────
+
+fn handleConfig(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    if (req.head.method == .POST) {
+        const raw = queryParam(target, "port") orelse "";
+        const decoded = try percentDecode(arena, raw);
+        const n = std.fmt.parseInt(u16, std.mem.trim(u8, decoded, " \r\n\t"), 10) catch
+            return respondErr(req, arena, error.InvalidPort);
+        if (n == 0) return respondErr(req, arena, error.InvalidPort);
+        writeConfigPort(io, n) catch |err| return respondErr(req, arena, err);
+        try respondOk(req);
+    } else {
+        const cfg = readConfigPort(io);
+        var aw = std.Io.Writer.Allocating.init(arena);
+        if (cfg) |n| {
+            try aw.writer.print("{{\"configured\":{d},\"default\":{d}}}", .{ n, default_port });
+        } else {
+            try aw.writer.print("{{\"configured\":null,\"default\":{d}}}", .{default_port});
+        }
+        try req.respond(aw.written(), .{ .extra_headers = json_ct });
+    }
+}
+
+/// Respond OK, then replace this process with a fresh copy (re-reads the
+/// saved port and rebinds). On success `replace` never returns.
+fn handleRestart(io: Io, req: *http.Server.Request) !void {
+    try respondOk(req);
+    try req.server.out.flush(); // make sure the client got the reply before we exec
+
+    var buf: [4096]u8 = undefined;
+    const n = std.process.executablePath(io, &buf) catch return;
+    const path = buf[0..n];
+    const err = std.process.replace(io, .{ .argv = &.{path} });
+    std.debug.print("restart failed: {s}\n", .{@errorName(err)});
+}
+
+fn writeConfigPort(io: Io, n: u16) !void {
+    var pbuf: [1024]u8 = undefined;
+    const path = configPath(&pbuf) orelse return error.NoHome;
+    var nbuf: [8]u8 = undefined;
+    const data = try std.fmt.bufPrint(&nbuf, "{d}", .{n});
+    try Io.Dir.cwd().writeFile(io, .{ .sub_path = path, .data = data });
 }
 
 // ───────────────────────── shared responses ─────────────────────────

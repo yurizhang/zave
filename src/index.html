@@ -155,6 +155,10 @@ body{background:var(--win);color:var(--text)}
 .about .author .ti{font-size:16px;color:var(--accent)}
 .about .author a{color:var(--accent);text-decoration:none;font-weight:600}
 .about .author a:hover{text-decoration:underline}
+.about .field{display:flex;flex-direction:column;gap:6px;text-align:left;margin:16px 2px 4px}
+.about .field label{font-size:12px;color:var(--muted)}
+.about input.port{height:38px;border:1px solid var(--border-strong);border-radius:8px;background:var(--content);color:var(--text);padding:0 12px;font-size:14px;font-family:ui-monospace,Menlo,monospace}
+.about input.port:focus{outline:none;border-color:var(--accent)}
 .about .meta{margin-top:14px;font-size:11px;color:var(--faint)}
 .row.drop,.cell.drop,.snode.drop,.crumb.drop{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
 .row[draggable],.cell[draggable]{-webkit-user-drag:element}
@@ -260,6 +264,7 @@ const I18N = {
     menu:"Menu", menuLanguage:"Language", menuTheme:"Theme", themeLight:"Light", themeDark:"Dark", about:"About",
     aboutDesc:"A lightweight Windows 11-style file manager — a Finder replacement that shows and copies full paths.",
     aboutGithub:"View on GitHub", aboutClose:"Close", aboutBuilt:"Built with Zig 0.16 · a single dependency-free binary · MIT", aboutAuthor:"Made by",
+    sysConfig:"System settings", cfgPort:"Port", cfgNote:"Saving restarts the app and reopens it on the new port.", cfgSave:"Save & Restart", cfgRestarting:"Restarting on the new port…", cfgInvalid:"Invalid port (1–65535)",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -294,6 +299,7 @@ const I18N = {
     menu:"菜单", menuLanguage:"语言", menuTheme:"主题", themeLight:"浅色", themeDark:"深色", about:"关于",
     aboutDesc:"一个轻量的 Windows 11 风格文件管理器 —— 能直接查看并复制完整路径的 Finder 替代品。",
     aboutGithub:"在 GitHub 查看", aboutClose:"关闭", aboutBuilt:"用 Zig 0.16 构建 · 单个零依赖二进制 · MIT", aboutAuthor:"作者",
+    sysConfig:"系统配置", cfgPort:"端口", cfgNote:"保存后会自动重启,并跳转到新端口。", cfgSave:"保存并重启", cfgRestarting:"正在用新端口重启…", cfgInvalid:"端口无效(1–65535)",
   },
 };
 const APP_VERSION = "1.5.0";
@@ -877,8 +883,43 @@ function openAppMenu(ev){
     {icon:"ti-language", label:t("menuLanguage")+`<span class="val">${lang==="en"?"English":"中文"}</span>`, action:()=>applyLang(lang==="en"?"zh":"en")},
     {icon:dark?"ti-moon":"ti-sun", label:t("menuTheme")+`<span class="val">${dark?t("themeDark"):t("themeLight")}</span>`, action:()=>applyTheme(!document.documentElement.classList.contains("dark"))},
     {sep:true},
+    {icon:"ti-adjustments", label:t("sysConfig"), action:showConfig},
     {icon:"ti-info-circle", label:t("about"), action:showAbout},
   ]);
+}
+function showConfig(){
+  closeAbout();
+  const cur=location.port||"";
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="aboutOverlay";
+  ov.innerHTML=`<div class="about">
+    <i class="ti ti-x about-x" id="cfgClose" title="${t("aboutClose")}"></i>
+    <div class="logo"><i class="ti ti-settings"></i></div>
+    <h2>${t("sysConfig")}</h2>
+    <div class="field"><label>${t("cfgPort")}</label><input class="port" id="cfgPort" type="number" min="1" max="65535" value="${cur}"></div>
+    <div class="meta" style="margin-top:6px">${t("cfgNote")}</div>
+    <div class="links"><button class="btn gh" id="cfgSave"><i class="ti ti-device-floppy"></i>${t("cfgSave")}</button></div>
+  </div>`;
+  ov.onclick=(e)=>{ if(e.target===ov) closeAbout(); };
+  document.body.appendChild(ov);
+  $("#cfgClose").onclick=closeAbout;
+  $("#cfgSave").onclick=saveConfig;
+  const inp=$("#cfgPort"); inp.focus(); inp.select();
+  inp.addEventListener("keydown",e=>{ if(e.key==="Enter") saveConfig(); });
+}
+async function saveConfig(){
+  const v=parseInt($("#cfgPort").value,10);
+  if(!(v>=1&&v<=65535)){ toast(t("cfgInvalid"),true); return; }
+  if(!await api("/api/config?port="+v)) return;        // persist the port
+  toast(t("cfgRestarting"));
+  fetch("/api/restart",{method:"POST"}).catch(()=>{}); // triggers exec; connection will drop
+  // wait for the new port to come up, then jump there
+  const url=location.protocol+"//"+location.hostname+":"+v+"/";
+  let tries=0;
+  const poll=()=>{
+    fetch(url,{mode:"no-cors"}).then(()=>{ location.href=url; })
+      .catch(()=>{ if(++tries<40) setTimeout(poll,300); else location.href=url; });
+  };
+  setTimeout(poll,700);
 }
 function showAbout(){
   closeAbout();
