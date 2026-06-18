@@ -7,7 +7,8 @@ const index_html = @embedFile("index.html");
 const tabler_css = @embedFile("assets/tabler-icons.min.css");
 const tabler_woff2 = @embedFile("assets/fonts/tabler-icons.woff2");
 
-const port: u16 = 8080;
+/// Default port; overridable via the PORT environment variable.
+const default_port: u16 = 8080;
 
 /// Max bytes served by /api/file (cap so a huge file can't exhaust memory).
 const max_file = 16 * 1024 * 1024;
@@ -16,6 +17,16 @@ const max_file = 16 * 1024 * 1024;
 fn homeDir() []const u8 {
     if (std.c.getenv("HOME")) |h| return std.mem.span(h);
     return "/";
+}
+
+/// Starting port: $PORT if set and valid, otherwise `default_port`.
+fn startPort() u16 {
+    if (std.c.getenv("PORT")) |p| {
+        if (std.fmt.parseInt(u16, std.mem.span(p), 10)) |n| {
+            if (n != 0) return n;
+        } else |_| {}
+    }
+    return default_port;
 }
 
 const json_ct: []const http.Header = &.{.{ .name = "content-type", .value = "application/json; charset=utf-8" }};
@@ -27,8 +38,23 @@ pub fn main() !void {
     defer threaded.deinit();
     const io = threaded.io();
 
-    var addr = try net.IpAddress.parse("127.0.0.1", port);
-    var server = try addr.listen(io, .{ .reuse_address = true });
+    const want = startPort();
+    var port: u16 = want;
+    var server = while (port < want +| 20) : (port += 1) {
+        var addr = net.IpAddress.parse("127.0.0.1", port) catch unreachable;
+        if (addr.listen(io, .{})) |s| {
+            break s;
+        } else |err| switch (err) {
+            error.AddressInUse => {
+                std.debug.print("Port {d} is in use, trying {d}…\n", .{ port, port + 1 });
+                continue;
+            },
+            else => return err,
+        }
+    } else {
+        std.debug.print("No free port found from {d}–{d}. Set PORT to a free one.\n", .{ want, want +| 19 });
+        return error.AddressInUse;
+    };
     defer server.deinit(io);
 
     std.debug.print("File manager started → http://127.0.0.1:{d}\n", .{port});

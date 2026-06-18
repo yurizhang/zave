@@ -52,6 +52,8 @@ Then open: **http://127.0.0.1:8080**
 
 The server listens on `127.0.0.1:8080` (local-only, safe).
 
+Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the chosen port is busy, the server automatically tries the next ones.
+
 ### How to use
 
 - **Single-click** a row to select it; **double-click** a folder to enter it.
