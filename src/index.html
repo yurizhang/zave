@@ -137,6 +137,8 @@ body{background:var(--win);color:var(--text)}
 .ctxitem.danger{color:var(--pdf)}
 .ctxitem .ti{font-size:17px;width:18px;text-align:center}
 .ctxsep{height:1px;background:var(--border);margin:5px 6px}
+.row.drop,.cell.drop,.snode.drop,.crumb.drop{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
+.row[draggable],.cell[draggable]{-webkit-user-drag:element}
 </style>
 </head>
 <body>
@@ -272,6 +274,7 @@ let current = "", home = "", entries = [], selName = null;
 let clipboard = null, view = "list", showHidden = false, filterText = "";
 let sortKey = "name", sortAsc = true, hist = [], histIdx = -1;
 let tabs = [], active = 0;   // each tab: {current, hist, histIdx, selName, entries, filterText}
+let dragSrc = null;          // full path of the item being dragged
 
 // ───────── helpers ─────────
 const join = (dir, name) => (dir.endsWith("/") ? dir : dir + "/") + name;
@@ -358,6 +361,7 @@ function buildSide(){
     n.className="snode"+(current===p.path?" active":"");
     n.innerHTML=`<i class="ti ${p.icon} lead" style="color:var(${p.col})"></i>${t(p.k)}`;
     n.onclick=()=>load(p.path);
+    makeDropTarget(n,p.path);
     side.appendChild(n);
   }
 }
@@ -368,7 +372,7 @@ function buildCrumbs(){
   const mk=(label,path,cur,icon)=>{
     const s=document.createElement("span"); s.className="crumb"+(cur?" cur":"");
     s.innerHTML=(icon?`<i class="ti ${icon}" style="font-size:15px;margin-right:4px;color:var(--muted)"></i>`:"")+label;
-    s.onclick=()=>load(path); return s;
+    s.onclick=()=>load(path); makeDropTarget(s,path); return s;
   };
   const chev=()=>{ const i=document.createElement("i"); i.className="ti ti-chevron-right"; i.style.cssText="color:var(--faint);font-size:13px"; return i; };
   const parts=current.split("/").filter(Boolean);
@@ -442,9 +446,16 @@ function bindRows(container,sel){
   container.querySelectorAll(sel).forEach(el=>{
     const name=decodeURIComponent(el.dataset.n);
     const e=entries.find(x=>x.name===name);
+    const full=join(current,name);
     el.onclick=()=>{ selName=name; render(); };
-    el.ondblclick=()=>{ if(e.kind==="directory") load(join(current,name)); else copyText(join(current,name)); };
+    el.ondblclick=()=>{ if(e.kind==="directory") load(full); else copyText(full); };
     el.oncontextmenu=(ev)=>{ ev.preventDefault(); ev.stopPropagation(); selName=name; render(); itemMenu(ev.clientX,ev.clientY,e); };
+    // draggable source
+    el.draggable=true;
+    el.ondragstart=(ev)=>{ dragSrc=full; ev.dataTransfer.effectAllowed="move"; ev.dataTransfer.setData("text/plain",full); };
+    el.ondragend=()=>{ dragSrc=null; document.querySelectorAll(".drop").forEach(x=>x.classList.remove("drop")); };
+    // folders are drop targets
+    if(e.kind==="directory") makeDropTarget(el,full);
   });
 }
 function renderDetails(){
@@ -492,6 +503,29 @@ function renderDetails(){
 }
 async function openExternal(path){
   if(await api("/api/open?path="+encodeURIComponent(path),t("opened"))) {}
+}
+
+// ───────── drag & drop (move) ─────────
+function validDrop(src,destDir){
+  if(!src||!destDir) return false;
+  if(destDir===src) return false;                 // onto itself
+  if(destDir.startsWith(src+"/")) return false;    // into its own descendant
+  if(join(destDir,basename(src))===src) return false; // already in that folder
+  return true;
+}
+async function doDrop(src,destDir){
+  if(!validDrop(src,destDir)) return;
+  const dest=join(destDir,basename(src));
+  if(await api("/api/move?from="+encodeURIComponent(src)+"&to="+encodeURIComponent(dest),t("moved"))){
+    if(clipboard&&clipboard.path===src) clipboard=null;
+    load(current,true);
+  }
+}
+// attach drop behaviour to any element that represents a target folder
+function makeDropTarget(el,destDir){
+  el.ondragover=(ev)=>{ if(validDrop(dragSrc,destDir)){ ev.preventDefault(); ev.dataTransfer.dropEffect="move"; el.classList.add("drop"); } };
+  el.ondragleave=()=>el.classList.remove("drop");
+  el.ondrop=(ev)=>{ ev.preventDefault(); el.classList.remove("drop"); doDrop(dragSrc,destDir); };
 }
 
 // ───────── context menu ─────────
