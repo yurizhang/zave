@@ -9,7 +9,7 @@
 
 static int g_child_pid = 0;
 
-@interface WFDelegate : NSObject <NSApplicationDelegate>
+@interface WFDelegate : NSObject <NSApplicationDelegate, WKUIDelegate>
 @end
 
 @implementation WFDelegate
@@ -20,6 +20,53 @@ static int g_child_pid = 0;
 // Tear down the server child process before exiting.
 - (void)applicationWillTerminate:(NSNotification *)note {
     if (g_child_pid > 0) kill(g_child_pid, SIGTERM);
+}
+
+// WKWebView ignores JS dialogs unless these WKUIDelegate methods are provided.
+// Without them, window.prompt()/confirm()/alert() silently do nothing — which
+// breaks New folder / Rename / Delete in the app.
+- (void)webView:(WKWebView *)webView
+        runJavaScriptAlertPanelWithMessage:(NSString *)message
+        initiatedByFrame:(WKFrameInfo *)frame
+        completionHandler:(void (^)(void))completionHandler {
+    NSAlert *a = [[NSAlert alloc] init];
+    a.messageText = @"window-finder";
+    a.informativeText = message ?: @"";
+    [a addButtonWithTitle:@"OK"];
+    [a runModal];
+    completionHandler();
+}
+
+- (void)webView:(WKWebView *)webView
+        runJavaScriptConfirmPanelWithMessage:(NSString *)message
+        initiatedByFrame:(WKFrameInfo *)frame
+        completionHandler:(void (^)(BOOL))completionHandler {
+    NSAlert *a = [[NSAlert alloc] init];
+    a.messageText = @"window-finder";
+    a.informativeText = message ?: @"";
+    [a addButtonWithTitle:@"OK"];
+    [a addButtonWithTitle:@"Cancel"];
+    completionHandler([a runModal] == NSAlertFirstButtonReturn);
+}
+
+- (void)webView:(WKWebView *)webView
+        runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt
+        defaultText:(NSString *)defaultText
+        initiatedByFrame:(WKFrameInfo *)frame
+        completionHandler:(void (^)(NSString *))completionHandler {
+    NSAlert *a = [[NSAlert alloc] init];
+    a.messageText = prompt ?: @"";
+    [a addButtonWithTitle:@"OK"];
+    [a addButtonWithTitle:@"Cancel"];
+    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 280, 24)];
+    input.stringValue = defaultText ?: @"";
+    a.accessoryView = input;
+    [a.window setInitialFirstResponder:input];
+    if ([a runModal] == NSAlertFirstButtonReturn) {
+        completionHandler(input.stringValue);
+    } else {
+        completionHandler(nil);
+    }
 }
 @end
 
@@ -46,6 +93,7 @@ void openWebview(const char *url, const char *title, int childPid) {
         WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
         WKWebView *webview = [[WKWebView alloc] initWithFrame:frame configuration:config];
         [webview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [webview setUIDelegate:delegate]; // enable JS alert/confirm/prompt dialogs
         [window setContentView:webview];
 
         NSURL *nsurl = [NSURL URLWithString:[NSString stringWithUTF8String:url]];
