@@ -303,7 +303,7 @@ const I18N = {
   },
 };
 const APP_VERSION = "1.6.0";
-let lang = "en";
+let lang = "zh";
 const t = (k) => I18N[lang][k];
 
 // ───────── state ─────────
@@ -867,7 +867,7 @@ function applyLang(l){
   try{ localStorage.setItem("fm-lang",lang); }catch{}
   applyStatic(); setSearchPlaceholder(); buildSide(); buildCrumbs(); render();
 }
-(function(){ let l="en"; try{ l=localStorage.getItem("fm-lang")||"en"; }catch{} lang=(l==="zh"?"zh":"en"); })();
+(function(){ let l="zh"; try{ l=localStorage.getItem("fm-lang")||"zh"; }catch{} lang=(l==="zh"?"zh":"en"); })();
 
 // theme (persisted)
 function applyTheme(dark){
