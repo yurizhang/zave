@@ -238,6 +238,7 @@ const I18N = {
     newTabTitle:"New tab", mOpenNewTab:"Open in new tab",
     mZip:"Compress to ZIP", mUnzip:"Extract here", zipped:"Compressed", unzipped:"Extracted",
     selectedN:(n)=>n+" selected", deleteN:(n)=>"Delete "+n+" items?", itemsSelected:(n)=>n+" items selected", total:"Total size",
+    mTerminal:"Open in Terminal", terminalOpened:"Opened in Terminal",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -268,6 +269,7 @@ const I18N = {
     newTabTitle:"新建标签页", mOpenNewTab:"在新标签页打开",
     mZip:"压缩为 ZIP", mUnzip:"解压到此处", zipped:"已压缩", unzipped:"已解压",
     selectedN:(n)=>"已选择 "+n+" 项", deleteN:(n)=>"删除 "+n+" 个项目?", itemsSelected:(n)=>"已选择 "+n+" 项", total:"总大小",
+    mTerminal:"用命令行打开", terminalOpened:"已在终端打开",
   },
 };
 let lang = "en";
@@ -560,6 +562,9 @@ function renderDetails(){
 async function openExternal(path){
   if(await api("/api/open?path="+encodeURIComponent(path),t("opened"))) {}
 }
+async function openTerminal(path){
+  await api("/api/terminal?path="+encodeURIComponent(path),t("terminalOpened"));
+}
 
 // ───────── drag & drop (move) ─────────
 function validDrop(src,destDir){
@@ -612,7 +617,10 @@ function itemMenu(x,y,e){
   const full=join(current,e.name);
   showMenu(x,y,[
     {icon:"ti-external-link", label:t("mOpen"), action:()=>openExternal(full)},
-    ...(e.kind==="directory" ? [{icon:"ti-folder", label:t("mOpenNewTab"), action:()=>newTab(full)}] : []),
+    ...(e.kind==="directory" ? [
+      {icon:"ti-folder", label:t("mOpenNewTab"), action:()=>newTab(full)},
+      {icon:"ti-terminal-2", label:t("mTerminal"), action:()=>openTerminal(full)},
+    ] : []),
     {sep:true},
     {icon:"ti-scissors", label:t("mCut"), action:doCut},
     {icon:"ti-copy", label:t("mCopy"), action:doCopy},
@@ -630,6 +638,7 @@ function bgMenu(x,y){
   showMenu(x,y,[
     {icon:"ti-folder-plus", label:t("mNewFolder"), action:doMkdir},
     {icon:"ti-clipboard", label:t("mPaste"), action:doPaste, disabled:!clipboard},
+    {icon:"ti-terminal-2", label:t("mTerminal"), action:()=>openTerminal(current)},
     {sep:true},
     {icon:"ti-refresh", label:t("mRefresh"), action:()=>load(current,true)},
   ]);

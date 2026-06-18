@@ -70,6 +70,7 @@ fn route(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request) !void {
     if (std.mem.startsWith(u8, target, "/api/mkdir")) return handleMkdir(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/file")) return handleFile(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/open")) return handleOpen(io, gpa, req, target);
+    if (std.mem.startsWith(u8, target, "/api/terminal")) return handleTerminal(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/zip")) return handleZip(io, gpa, req, target);
     if (std.mem.startsWith(u8, target, "/api/unzip")) return handleUnzip(io, gpa, req, target);
 
@@ -315,6 +316,24 @@ fn doOpen(io: Io, path: []const u8) !void {
     if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
 
     var child = try std.process.spawn(io, .{ .argv = &.{ "/usr/bin/open", path } });
+    _ = try child.wait(io);
+}
+
+fn handleTerminal(io: Io, gpa: std.mem.Allocator, req: *http.Server.Request, target: []const u8) !void {
+    var arena_state = std.heap.ArenaAllocator.init(gpa);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    const path = try percentDecode(arena, queryParam(target, "path") orelse "");
+    doTerminal(io, path) catch |err| return respondErr(req, arena, err);
+    try respondOk(req);
+}
+
+fn doTerminal(io: Io, path: []const u8) !void {
+    if (path.len == 0) return error.MissingParam;
+    if (!std.fs.path.isAbsolute(path)) return error.NotAbsolute;
+
+    var child = try std.process.spawn(io, .{ .argv = &.{ "/usr/bin/open", "-a", "Terminal", path } });
     _ = try child.wait(io);
 }
 
