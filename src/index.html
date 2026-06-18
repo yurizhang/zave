@@ -40,6 +40,8 @@ body{background:var(--win);color:var(--text)}
 .spacer{flex:1}
 .wbtn{display:flex;align-items:center;justify-content:center;min-width:46px;height:44px;padding:0 8px;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600}
 .wbtn:hover{background:var(--hover)}
+.wbtn{position:relative}
+.wbtn.hasdot::after{content:"";position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--pdf);box-shadow:0 0 0 2px var(--win)}
 
 .cmdbar{display:flex;align-items:center;gap:3px;height:48px;padding:0 12px;background:var(--content);border-bottom:1px solid var(--border);flex:0 0 auto}
 .cmd{display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;font-size:13px;color:var(--text);border-radius:7px;cursor:pointer;user-select:none}
@@ -265,6 +267,7 @@ const I18N = {
     aboutDesc:"A fast, powerful Windows 11-style file manager for macOS — the Finder replacement you've been waiting for. Tabs, multi-select, live preview, ZIP, drag-and-drop and real full-path display, all in one tiny dependency-free binary. Faster and friendlier than Finder.",
     aboutGithub:"View on GitHub", aboutClose:"Close", aboutBuilt:"Built with Zig 0.16 · a single dependency-free binary · MIT", aboutAuthor:"Made by",
     sysConfig:"System settings", cfgPort:"Port", cfgNote:"Saving restarts the app and reopens it on the new port.", cfgSave:"Save & Restart", cfgRestarting:"Restarting on the new port…", cfgInvalid:"Invalid port (1–65535)",
+    menuNotice:"Notices", noticeNone:"No notices right now.", noticeOpen:"Learn more",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -300,9 +303,13 @@ const I18N = {
     aboutDesc:"一个快速、强大的 macOS 文件管理器 —— 你一直想要的 Finder 替代品。多标签、多选、实时预览、压缩解压、拖拽,还能直接查看并复制完整路径,全部装进一个零依赖的小巧二进制里。比 Finder 更快、更好用。",
     aboutGithub:"在 GitHub 查看", aboutClose:"关闭", aboutBuilt:"用 Zig 0.16 构建 · 单个零依赖二进制 · MIT", aboutAuthor:"作者",
     sysConfig:"系统配置", cfgPort:"端口", cfgNote:"保存后会自动重启,并跳转到新端口。", cfgSave:"保存并重启", cfgRestarting:"正在用新端口重启…", cfgInvalid:"端口无效(1–65535)",
+    menuNotice:"通知", noticeNone:"暂无通知。", noticeOpen:"查看详情",
   },
 };
-const APP_VERSION = "1.6.3";
+const APP_VERSION = "1.7.0";
+const NOTICE_URL = "https://raw.githubusercontent.com/yurizhang/window-finder/main/notice.json";
+let notice = null;            // latest fetched notice (with non-empty id)
+let noticeToastedId = "";     // avoid re-toasting the same notice this session
 let lang = "zh";
 const t = (k) => I18N[lang][k];
 
@@ -880,12 +887,54 @@ function applyTheme(dark){
 function openAppMenu(ev){
   const dark=document.documentElement.classList.contains("dark");
   showMenu(ev.clientX, ev.clientY, [
+    {icon:"ti-bell", label:t("menuNotice")+(noticeUnseen()?` <span class="val" style="color:var(--pdf)">●</span>`:""), action:showNotice},
+    {sep:true},
     {icon:"ti-language", label:t("menuLanguage")+`<span class="val">${lang==="en"?"English":"中文"}</span>`, action:()=>applyLang(lang==="en"?"zh":"en")},
     {icon:dark?"ti-moon":"ti-sun", label:t("menuTheme")+`<span class="val">${dark?t("themeDark"):t("themeLight")}</span>`, action:()=>applyTheme(!document.documentElement.classList.contains("dark"))},
     {sep:true},
     {icon:"ti-adjustments", label:t("sysConfig"), action:showConfig},
     {icon:"ti-info-circle", label:t("about"), action:showAbout},
   ]);
+}
+
+// ───────── remote notices ─────────
+function noticeUnseen(){
+  if(!notice||!notice.id) return false;
+  let seen=""; try{ seen=localStorage.getItem("fm-notice-seen")||""; }catch{}
+  return seen!==notice.id;
+}
+async function fetchNotice(){
+  try{
+    const r=await fetch(NOTICE_URL+"?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) return;
+    const d=await r.json();
+    notice=(d&&d.id)?d:null;
+    if(noticeUnseen()){
+      $("#menuBtn").classList.add("hasdot");
+      if(noticeToastedId!==notice.id){           // toast once per notice per session
+        noticeToastedId=notice.id;
+        toast((notice.title?notice.title+": ":"")+(notice.message||""), notice.level==="critical"||notice.level==="warning");
+      }
+    } else {
+      $("#menuBtn").classList.remove("hasdot");
+    }
+  }catch{}
+}
+function showNotice(){
+  closeAbout();
+  const n=notice;
+  const body = (n&&n.id)
+    ? `<div class="dname" style="margin-top:6px">${escapeHtml(n.title||t("menuNotice"))}</div><p>${escapeHtml(n.message||"")}</p>`+
+      (n.url?`<div class="links"><a class="btn gh" href="${escapeHtml(n.url)}" target="_blank" rel="noopener"><i class="ti ti-external-link"></i>${t("noticeOpen")}</a></div>`:"")
+    : `<p class="dempty">${t("noticeNone")}</p>`;
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="aboutOverlay";
+  ov.innerHTML=`<div class="about">
+    <i class="ti ti-x about-x" id="ntClose" title="${t("aboutClose")}"></i>
+    <div class="logo"><i class="ti ti-bell"></i></div>${body}</div>`;
+  ov.onclick=(e)=>{ if(e.target===ov) closeAbout(); };
+  document.body.appendChild(ov);
+  $("#ntClose").onclick=closeAbout;
+  if(n&&n.id){ try{ localStorage.setItem("fm-notice-seen",n.id); }catch{} $("#menuBtn").classList.remove("hasdot"); }
 }
 function showConfig(){
   closeAbout();
@@ -967,6 +1016,8 @@ tabs=[{ current:"", hist:[], histIdx:-1, selName:null, entries:[], filterText:""
 active=0;
 applyStatic();
 load("");
+fetchNotice();
+setInterval(fetchNotice, 15*60*1000);  // re-check every 15 min
 </script>
 </body>
 </html>
