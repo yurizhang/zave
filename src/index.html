@@ -149,6 +149,10 @@ body{background:var(--win);color:var(--text)}
 .about .btn.gh{background:var(--accent);color:#fff}
 .about .btn.close{background:var(--hover);color:var(--text)}
 .about .btn .ti{font-size:17px}
+.about .author{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--muted);margin-top:6px}
+.about .author .ti{font-size:16px;color:var(--accent)}
+.about .author a{color:var(--accent);text-decoration:none;font-weight:600}
+.about .author a:hover{text-decoration:underline}
 .about .meta{margin-top:14px;font-size:11px;color:var(--faint)}
 .row.drop,.cell.drop,.snode.drop,.crumb.drop{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
 .row[draggable],.cell[draggable]{-webkit-user-drag:element}
@@ -253,7 +257,7 @@ const I18N = {
     mTerminal:"Open in Terminal", terminalOpened:"Opened in Terminal",
     menu:"Menu", menuLanguage:"Language", menuTheme:"Theme", themeLight:"Light", themeDark:"Dark", about:"About",
     aboutDesc:"A lightweight Windows 11-style file manager — a Finder replacement that shows and copies full paths.",
-    aboutGithub:"View on GitHub", aboutClose:"Close", aboutBuilt:"Built with Zig 0.16 · a single dependency-free binary · MIT",
+    aboutGithub:"View on GitHub", aboutClose:"Close", aboutBuilt:"Built with Zig 0.16 · a single dependency-free binary · MIT", aboutAuthor:"Made by",
   },
   zh:{
     lang:"切换语言 / Switch language", theme:"切换深色 / 浅色",
@@ -287,7 +291,7 @@ const I18N = {
     mTerminal:"用命令行打开", terminalOpened:"已在终端打开",
     menu:"菜单", menuLanguage:"语言", menuTheme:"主题", themeLight:"浅色", themeDark:"深色", about:"关于",
     aboutDesc:"一个轻量的 Windows 11 风格文件管理器 —— 能直接查看并复制完整路径的 Finder 替代品。",
-    aboutGithub:"在 GitHub 查看", aboutClose:"关闭", aboutBuilt:"用 Zig 0.16 构建 · 单个零依赖二进制 · MIT",
+    aboutGithub:"在 GitHub 查看", aboutClose:"关闭", aboutBuilt:"用 Zig 0.16 构建 · 单个零依赖二进制 · MIT", aboutAuthor:"作者",
   },
 };
 const APP_VERSION = "1.4.0";
@@ -882,6 +886,7 @@ function showAbout(){
     <h2>window-finder</h2>
     <div class="ver">v${APP_VERSION}</div>
     <p>${t("aboutDesc")}</p>
+    <div class="author"><i class="ti ti-user"></i>${t("aboutAuthor")} <a href="https://github.com/yurizhang" target="_blank" rel="noopener">Yong Zhang (@yurizhang)</a></div>
     <div class="links">
       <a class="btn gh" href="https://github.com/yurizhang/window-finder" target="_blank" rel="noopener"><i class="ti ti-brand-github"></i>${t("aboutGithub")}</a>
       <button class="btn close" id="aboutCloseBtn"><i class="ti ti-x"></i>${t("aboutClose")}</button>
