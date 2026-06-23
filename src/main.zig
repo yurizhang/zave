@@ -6,6 +6,22 @@ const http = std.http;
 /// Native macOS window hosting a WKWebView (implemented in src/macwin.m).
 extern fn openWebview(url: [*:0]const u8, title: [*:0]const u8, child_pid: c_int) void;
 extern "c" fn setenv(name: [*:0]const u8, value: [*:0]const u8, overwrite: c_int) c_int;
+extern "c" fn _exit(code: c_int) noreturn;
+
+/// Exit cleanly (no crash report) when the host kills us on quit.
+fn onSignal(_: std.posix.SIG) callconv(.c) void {
+    _exit(0);
+}
+fn installShutdownSignals() void {
+    const act: std.posix.Sigaction = .{
+        .handler = .{ .handler = onSignal },
+        .mask = std.posix.sigemptyset(),
+        .flags = 0,
+    };
+    std.posix.sigaction(std.posix.SIG.TERM, &act, null);
+    std.posix.sigaction(std.posix.SIG.INT, &act, null);
+    std.posix.sigaction(std.posix.SIG.HUP, &act, null);
+}
 
 const index_html = @embedFile("index.html");
 const tabler_css = @embedFile("assets/tabler-icons.min.css");
@@ -82,6 +98,7 @@ pub fn main() !void {
 /// Server process: bind a port and serve forever on the main thread.
 /// (Cocoa-free, so the Threaded I/O behaves normally.)
 fn runServer(io: Io, gpa: std.mem.Allocator) void {
+    installShutdownSignals(); // exit(0) on SIGTERM/INT/HUP — no crash dialog
     const want = resolvePort(io);
     var port: u16 = want;
     var server = while (port < want +| 20) : (port += 1) {

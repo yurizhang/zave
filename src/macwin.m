@@ -27,6 +27,7 @@ static void makeWindow(void) {
                                                    styleMask:style
                                                      backing:NSBackingStoreBuffered
                                                        defer:NO];
+    [window setReleasedWhenClosed:NO]; // we manage lifetime; avoid double-release on quit
     [window setTitle:g_title];
     [window setMinSize:NSMakeSize(720, 480)];
     [window center];
