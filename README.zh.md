@@ -1,6 +1,6 @@
 # Zave
 
-**v2.0.0** · 一个快速、强大的 **macOS 文件管理器**,Windows 11 风格 —— 真正能替代 Finder,而且只是一个零依赖的 **Zig 0.16** 二进制。
+**v2.0.1** · 一个快速、强大的 **macOS 文件管理器**,Windows 11 风格 —— 真正能替代 Finder,而且只是一个零依赖的 **Zig 0.16** 二进制。
 
 > 🇬🇧 For English, see [README.md](README.md)
 >

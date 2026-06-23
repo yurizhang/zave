@@ -306,7 +306,7 @@ const I18N = {
     menuNotice:"通知", noticeNone:"暂无通知。", noticeOpen:"查看详情",
   },
 };
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.0.1";
 const NOTICE_URL = "https://raw.githubusercontent.com/yurizhang/zave/main/notice.json";
 let notice = null;            // latest fetched notice (with non-empty id)
 let lang = "zh";
@@ -707,18 +707,20 @@ function moveSel(delta, extend){
 }
 
 // ───────── load / navigation ─────────
-async function load(path, fromHist){
+async function load(path, fromHist, silent){
   try{
     const res=await fetch("/api/list?path="+encodeURIComponent(path));
     const data=await res.json();
-    if(data.error){ toast(t("cannotOpen")+data.error,true); return; }
+    if(data.error){ if(!silent) toast(t("cannotOpen")+data.error,true); return false; }
     current=data.path; home=data.home||home; entries=data.entries;
     selName=null; selSet=new Set(); filterText=""; $("#filter").value="";
     if(!fromHist){ hist=hist.slice(0,histIdx+1); hist.push(current); histIdx=hist.length-1; }
+    try{ localStorage.setItem("fm-last-dir", current); }catch{}  // remember for next launch
     setSearchPlaceholder();
     buildSide(); buildCrumbs(); renderTabbar(); render(); updateNav();
     $(".main").scrollTop=0;
-  }catch(err){ toast(t("loadFailed")+err,true); }
+    return true;
+  }catch(err){ if(!silent) toast(t("loadFailed")+err,true); return false; }
 }
 function updateNav(){
   $("#backBtn").classList.toggle("disabled",histIdx<=0);
@@ -1017,7 +1019,11 @@ document.addEventListener("keydown",e=>{
 tabs=[{ current:"", hist:[], histIdx:-1, selName:null, entries:[], filterText:"" }];
 active=0;
 applyStatic();
-load("");
+// open the last-visited directory if we have one; fall back to home
+(async ()=>{
+  let last=""; try{ last=localStorage.getItem("fm-last-dir")||""; }catch{}
+  if(!last || !(await load(last, false, true))) await load("");
+})();
 fetchNotice();   // check for announcements once, at startup
 </script>
 </body>

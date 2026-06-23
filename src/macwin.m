@@ -30,8 +30,9 @@ static void makeWindow(void) {
     [window setReleasedWhenClosed:NO]; // we manage lifetime; avoid double-release on quit
     [window setTitle:g_title];
     [window setMinSize:NSMakeSize(720, 480)];
-    [window center];
-    [window cascadeTopLeftFromPoint:NSMakePoint(24, 24)]; // offset extra windows
+    // Remember window size/position across launches; center on first ever run.
+    [window setFrameAutosaveName:@"ZaveWindow"];
+    if (![window setFrameUsingName:@"ZaveWindow"]) [window center];
 
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
     WKWebView *webview = [[WKWebView alloc] initWithFrame:frame configuration:config];
@@ -56,6 +57,8 @@ static void setupMenu(void) {
     [menubar addItem:appItem];
     NSMenu *appMenu = [[NSMenu alloc] init];
     [appMenu addItemWithTitle:@"About Zave" action:@selector(showAbout:) keyEquivalent:@""];
+    [appMenu addItem:[NSMenuItem separatorItem]];
+    [appMenu addItemWithTitle:@"Settings…" action:@selector(showSettings:) keyEquivalent:@","];
     [appMenu addItem:[NSMenuItem separatorItem]];
     [appMenu addItemWithTitle:@"Quit Zave" action:@selector(terminate:) keyEquivalent:@"q"];
     [appItem setSubmenu:appMenu];
@@ -86,14 +89,16 @@ static void setupMenu(void) {
 - (void)newWindow:(id)sender {
     makeWindow();
 }
-// Reuse the web UI's About modal (Settings ⚙ → About) from the native menu.
-- (void)showAbout:(id)sender {
+// Run JS in the front window's web view (used by the native menu items).
+- (void)evalJS:(NSString *)js {
     NSWindow *win = [NSApp keyWindow] ?: [[NSApp windows] firstObject];
     id view = [win contentView];
     if ([view isKindOfClass:[WKWebView class]]) {
-        [(WKWebView *)view evaluateJavaScript:@"window.showAbout&&showAbout()" completionHandler:nil];
+        [(WKWebView *)view evaluateJavaScript:js completionHandler:nil];
     }
 }
+- (void)showAbout:(id)sender { [self evalJS:@"window.showAbout&&showAbout()"]; }
+- (void)showSettings:(id)sender { [self evalJS:@"window.showConfig&&showConfig()"]; }
 
 // WKWebView ignores JS dialogs unless these WKUIDelegate methods exist.
 - (void)webView:(WKWebView *)webView
