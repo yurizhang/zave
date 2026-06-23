@@ -242,6 +242,18 @@ while (try it.next(io)) |entry| { ... }
 
 ---
 
+## 📸 截图
+
+| 列表视图(浅色) | 列表视图(深色) |
+|:---:|:---:|
+| ![列表 — 浅色](design/UI/01-light-list.png) | ![列表 — 深色](design/UI/03-dark-list.png) |
+
+**网格视图**
+
+![网格视图](design/UI/02-light-grid.png)
+
+---
+
 ## 📄 License
 
 [MIT](LICENSE) &copy; 2026 Yong Zhang &lt;zhangyong0604@126.com&gt;

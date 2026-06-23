@@ -245,6 +245,18 @@ Each request uses an **ArenaAllocator** that is freed as a whole when the reques
 
 ---
 
+## 📸 Screenshots
+
+| List view (light) | List view (dark) |
+|:---:|:---:|
+| ![List view — light](design/UI/01-light-list.png) | ![List view — dark](design/UI/03-dark-list.png) |
+
+**Grid view**
+
+![Grid view](design/UI/02-light-grid.png)
+
+---
+
 ## 📄 License
 
 [MIT](LICENSE) &copy; 2026 Yong Zhang &lt;zhangyong0604@126.com&gt;
