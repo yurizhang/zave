@@ -47,8 +47,14 @@ for arg in "$@"; do
     --dmg)
       echo "[+] Building .dmg ..."
       rm -f "${OUT}/zave.dmg"
-      hdiutil create -volname "Zave" -srcfolder "${OUT}/${APP}" \
+      # Stage the app next to an /Applications symlink so users can drag-install.
+      STAGE="${OUT}/.dmg-stage"
+      rm -rf "${STAGE}"; mkdir -p "${STAGE}"
+      cp -R "${OUT}/${APP}" "${STAGE}/"
+      ln -s /Applications "${STAGE}/Applications"
+      hdiutil create -volname "Zave" -srcfolder "${STAGE}" \
         -ov -format UDZO "${OUT}/zave.dmg" >/dev/null
+      rm -rf "${STAGE}"
       echo "Done: ${OUT}/zave.dmg"
       ;;
   esac
