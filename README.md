@@ -1,10 +1,12 @@
-# window-finder
+# Zave
 
-**v1.8.0** · A fast, powerful **Windows 11-style file manager for macOS** — a real Finder replacement, packed into a single dependency-free **Zig 0.16** binary.
+**v2.0.0** · A fast, powerful **Windows 11-style file manager for macOS** — a real Finder replacement, packed into a single dependency-free **Zig 0.16** binary.
 
 > 🇨🇳 中文文档请看 [README.zh.md](README.zh.md)
+>
+> 🎉 **Zave** is the 2.0 evolution of [window-finder](https://github.com/yurizhang/window-finder) (frozen at v1.8) — same project, new name and home.
 
-Let's be honest: macOS Finder is clunky. You can't see the full path, copying a path is a chore, and it's slower than it has any right to be. **window-finder** fixes all of that — a snappy, Windows 11-style file manager that shows and copies the full path instantly, with tabs, multi-select, live preview, ZIP, drag-and-drop, "open in Terminal" and a lot more. It does more than Finder, gets out of your way faster, and ships as one tiny self-contained binary.
+Let's be honest: macOS Finder is clunky. You can't see the full path, copying a path is a chore, and it's slower than it has any right to be. **Zave** fixes all of that — a snappy, Windows 11-style file manager that shows and copies the full path instantly, with tabs, multi-select, live preview, ZIP, drag-and-drop, "open in Terminal" and a lot more. It does more than Finder, gets out of your way faster, and ships as one tiny self-contained binary.
 
 And the whole backend is **pure Zig** — no third-party dependencies, only the standard library — so it doubles as a hands-on tour of Zig 0.16's new I/O API.
 
@@ -39,11 +41,11 @@ And the whole backend is **pure Zig** — no third-party dependencies, only the 
 
 ### Just use it (no build) — recommended
 
-1. Download **window-finder.zip** from the [latest release](https://github.com/yurizhang/window-finder/releases/latest) and **double-click to unzip**.
-2. Double-click `window-finder`. macOS says *"Not Opened"* — click **Done** (the app isn't code-signed).
-3. Open **System Settings → Privacy & Security**, scroll down to *"window-finder was blocked…"*, click **Open Anyway**, then open the app again and confirm.
+1. Download **zave.zip** from the [latest release](https://github.com/yurizhang/zave/releases/latest) and **double-click to unzip**.
+2. Double-click `Zave`. macOS says *"Not Opened"* — click **Done** (the app isn't code-signed).
+3. Open **System Settings → Privacy & Security**, scroll down to *"Zave was blocked…"*, click **Open Anyway**, then open the app again and confirm.
 
-> ⚠️ The old "right-click → Open" trick **no longer works on macOS 15+ (Sequoia/Tahoe)** — you must use **System Settings → Privacy & Security → Open Anyway**. Only needed once. Developers can instead run `xattr -dr com.apple.quarantine window-finder.app`. Runs from anywhere; universal (Apple Silicon + Intel).
+> ⚠️ The old "right-click → Open" trick **no longer works on macOS 15+ (Sequoia/Tahoe)** — you must use **System Settings → Privacy & Security → Open Anyway**. Only needed once. Developers can instead run `xattr -dr com.apple.quarantine Zave.app`. Runs from anywhere; universal (Apple Silicon + Intel).
 
 ### Build from source
 
@@ -55,7 +57,7 @@ zig build run
 
 # Or in two steps
 zig build
-./zig-out/bin/filemanager
+./zig-out/bin/zave
 ```
 
 Then open: **http://127.0.0.1:9781**
@@ -70,16 +72,16 @@ Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the ch
 
 - Build a distributable **universal** (arm64 + Intel) `.app`, `.zip` or `.dmg`:
   ```bash
-  ./packaging/package.sh                # -> dist/window-finder.app
-  ./packaging/package.sh --zip          # -> dist/window-finder.zip
+  ./packaging/package.sh                # -> dist/Zave.app
+  ./packaging/package.sh --zip          # -> dist/zave.zip
   ./packaging/package.sh --zip --dmg    # both
   ```
 - **Installing a downloaded build:** the app is **not code-signed** (no paid
   Apple Developer account). On macOS 15+ (Sequoia/Tahoe): double-click → **Done**,
   then **System Settings → Privacy & Security → Open Anyway**. (Developers:
-  `xattr -dr com.apple.quarantine window-finder.app`.)
+  `xattr -dr com.apple.quarantine Zave.app`.)
 - Prefer the browser instead of a window? Run headless: `HEADLESS=1 zig build run`, then open the printed URL.
-- macOS will ask permission the first time it touches Desktop/Documents/Downloads (normal privacy prompts). Click **Allow**, or grant **Full Disk Access** to window-finder once in System Settings → Privacy & Security.
+- macOS will ask permission the first time it touches Desktop/Documents/Downloads (normal privacy prompts). Click **Allow**, or grant **Full Disk Access** to Zave once in System Settings → Privacy & Security.
 
 ### How to use
 
@@ -92,7 +94,7 @@ Set a custom port with the `PORT` env var (`PORT=9000 zig build run`). If the ch
 ## 🧱 Project Structure
 
 ```
-window-finder/
+Zave/
 ├── build.zig          # Build script (defines the exe and the `run` step)
 └── src/
     ├── main.zig       # HTTP server + filesystem logic

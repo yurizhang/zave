@@ -1,10 +1,12 @@
-# window-finder
+# Zave
 
-**v1.8.0** · 一个快速、强大的 **macOS 文件管理器**,Windows 11 风格 —— 真正能替代 Finder,而且只是一个零依赖的 **Zig 0.16** 二进制。
+**v2.0.0** · 一个快速、强大的 **macOS 文件管理器**,Windows 11 风格 —— 真正能替代 Finder,而且只是一个零依赖的 **Zig 0.16** 二进制。
 
 > 🇬🇧 For English, see [README.md](README.md)
+>
+> 🎉 **Zave** 由 [window-finder](https://github.com/yurizhang/window-finder)(停在 v1.8)升级而来 —— 同一个项目,换了名字和新家,哈哈!
 
-说句实话:macOS 的 Finder 真的不好用 —— 看不到完整路径、复制路径麻烦,而且慢得没道理。**window-finder** 把这些全解决了:一个利落的 Windows 11 风格文件管理器,能即时查看并复制完整路径,还带多标签、多选、实时预览、压缩解压、拖拽、「用命令行打开」等一大堆功能。它比 Finder 做得更多、反应更快,却只是一个小巧的、自包含的二进制。
+说句实话:macOS 的 Finder 真的不好用 —— 看不到完整路径、复制路径麻烦,而且慢得没道理。**Zave** 把这些全解决了:一个利落的 Windows 11 风格文件管理器,能即时查看并复制完整路径,还带多标签、多选、实时预览、压缩解压、拖拽、「用命令行打开」等一大堆功能。它比 Finder 做得更多、反应更快,却只是一个小巧的、自包含的二进制。
 
 而且整个后端是**纯 Zig** —— 不依赖任何第三方库,只用标准库 —— 所以它顺便也是一次 Zig 0.16 新 I/O API 的实战。
 
@@ -39,11 +41,11 @@
 
 ### 直接使用(免编译,推荐)
 
-1. 从 [最新 Release](https://github.com/yurizhang/window-finder/releases/latest) 下载 **window-finder.zip**,**双击解压**。
-2. 双击 `window-finder`,系统提示*「无法打开」*——点 **完成 / Done**(因为没做代码签名)。
-3. 打开 **系统设置 → 隐私与安全性**,往下滚到*「已阻止使用 window-finder…」*,点 **仍要打开 / Open Anyway**,再打开 App 并确认。
+1. 从 [最新 Release](https://github.com/yurizhang/zave/releases/latest) 下载 **zave.zip**,**双击解压**。
+2. 双击 `Zave`,系统提示*「无法打开」*——点 **完成 / Done**(因为没做代码签名)。
+3. 打开 **系统设置 → 隐私与安全性**,往下滚到*「已阻止使用 Zave…」*,点 **仍要打开 / Open Anyway**,再打开 App 并确认。
 
-> ⚠️ **macOS 15+(Sequoia/Tahoe 26)已取消「右键 → 打开」**,必须走 **系统设置 → 隐私与安全性 → 仍要打开**,只需一次。开发者也可直接执行 `xattr -dr com.apple.quarantine window-finder.app`。在哪解压在哪跑;通用版,Apple 芯片和 Intel 都能跑。
+> ⚠️ **macOS 15+(Sequoia/Tahoe 26)已取消「右键 → 打开」**,必须走 **系统设置 → 隐私与安全性 → 仍要打开**,只需一次。开发者也可直接执行 `xattr -dr com.apple.quarantine Zave.app`。在哪解压在哪跑;通用版,Apple 芯片和 Intel 都能跑。
 
 ### 从源码构建
 
@@ -55,7 +57,7 @@ zig build run
 
 # 或者分两步
 zig build
-./zig-out/bin/filemanager
+./zig-out/bin/zave
 ```
 
 启动后访问:**http://127.0.0.1:9781**
@@ -70,13 +72,13 @@ zig build
 
 - 打包成可分发的**通用**(arm64 + Intel)`.app`、`.zip` 或 `.dmg`:
   ```bash
-  ./packaging/package.sh                # -> dist/window-finder.app
-  ./packaging/package.sh --zip          # -> dist/window-finder.zip
+  ./packaging/package.sh                # -> dist/Zave.app
+  ./packaging/package.sh --zip          # -> dist/zave.zip
   ./packaging/package.sh --zip --dmg    # 两个都要
   ```
-- **下载安装说明**:App **未做代码签名**(没有付费 Apple 开发者账号)。macOS 15+(Sequoia/Tahoe):双击 → **完成**,再去 **系统设置 → 隐私与安全性 → 仍要打开**。(开发者可直接 `xattr -dr com.apple.quarantine window-finder.app`。)
+- **下载安装说明**:App **未做代码签名**(没有付费 Apple 开发者账号)。macOS 15+(Sequoia/Tahoe):双击 → **完成**,再去 **系统设置 → 隐私与安全性 → 仍要打开**。(开发者可直接 `xattr -dr com.apple.quarantine Zave.app`。)
 - 想用浏览器而不是窗口?跑无头模式:`HEADLESS=1 zig build run`,再打开打印出的地址。
-- 首次访问 桌面/文稿/下载 时 macOS 会弹权限请求(正常的隐私机制),点**允许**即可;或在 系统设置 → 隐私与安全性 → 完全磁盘访问权限 里给 window-finder 一次性授权。
+- 首次访问 桌面/文稿/下载 时 macOS 会弹权限请求(正常的隐私机制),点**允许**即可;或在 系统设置 → 隐私与安全性 → 完全磁盘访问权限 里给 Zave 一次性授权。
 
 ### 怎么用
 
@@ -89,7 +91,7 @@ zig build
 ## 🧱 项目结构
 
 ```
-window-finder/
+Zave/
 ├── build.zig          # 构建脚本(定义 exe、run 步骤)
 └── src/
     ├── main.zig       # HTTP 服务 + 文件系统逻辑

@@ -54,9 +54,9 @@ static void setupMenu(void) {
     NSMenuItem *appItem = [[NSMenuItem alloc] init];
     [menubar addItem:appItem];
     NSMenu *appMenu = [[NSMenu alloc] init];
-    [appMenu addItemWithTitle:@"About window-finder" action:@selector(showAbout:) keyEquivalent:@""];
+    [appMenu addItemWithTitle:@"About Zave" action:@selector(showAbout:) keyEquivalent:@""];
     [appMenu addItem:[NSMenuItem separatorItem]];
-    [appMenu addItemWithTitle:@"Quit window-finder" action:@selector(terminate:) keyEquivalent:@"q"];
+    [appMenu addItemWithTitle:@"Quit Zave" action:@selector(terminate:) keyEquivalent:@"q"];
     [appItem setSubmenu:appMenu];
 
     NSMenuItem *fileItem = [[NSMenuItem alloc] init];
@@ -100,7 +100,7 @@ static void setupMenu(void) {
         initiatedByFrame:(WKFrameInfo *)frame
         completionHandler:(void (^)(void))completionHandler {
     NSAlert *a = [[NSAlert alloc] init];
-    a.messageText = @"window-finder";
+    a.messageText = @"Zave";
     a.informativeText = message ?: @"";
     [a addButtonWithTitle:@"OK"];
     [a runModal];
@@ -112,7 +112,7 @@ static void setupMenu(void) {
         initiatedByFrame:(WKFrameInfo *)frame
         completionHandler:(void (^)(BOOL))completionHandler {
     NSAlert *a = [[NSAlert alloc] init];
-    a.messageText = @"window-finder";
+    a.messageText = @"Zave";
     a.informativeText = message ?: @"";
     [a addButtonWithTitle:@"OK"];
     [a addButtonWithTitle:@"Cancel"];

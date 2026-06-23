@@ -35,9 +35,9 @@ fn currentEnviron() std.process.Environ {
     return .{ .block = .{ .slice = slice } };
 }
 
-/// Absolute path of the persisted port config file (`$HOME/.window-finder-port`).
+/// Absolute path of the persisted port config file (`$HOME/.zave-port`).
 fn configPath(buf: []u8) ?[]const u8 {
-    return std.fmt.bufPrint(buf, "{s}/.window-finder-port", .{homeDir()}) catch null;
+    return std.fmt.bufPrint(buf, "{s}/.zave-port", .{homeDir()}) catch null;
 }
 
 /// Port saved by the user via /api/config, if any.
@@ -102,7 +102,7 @@ fn runServer(io: Io, gpa: std.mem.Allocator) void {
     defer server.deinit(io);
 
     // The host parses this line to learn the chosen port.
-    std.debug.print("File manager started → http://127.0.0.1:{d}\n", .{port});
+    std.debug.print("Zave server started → http://127.0.0.1:{d}\n", .{port});
 
     // Handle each connection concurrently so multiple windows (multiple
     // clients) don't block one another. Safe here: this process is headless
@@ -135,9 +135,9 @@ fn runHost(io: Io, gpa: std.mem.Allocator) !void {
 
     var url_buf: [64]u8 = undefined;
     const url = std.fmt.bufPrintZ(&url_buf, "http://127.0.0.1:{d}/", .{port}) catch unreachable;
-    std.debug.print("window-finder → {s}\n", .{url});
+    std.debug.print("Zave → {s}\n", .{url});
 
-    openWebview(url.ptr, "window-finder", @intCast(child.id orelse 0));
+    openWebview(url.ptr, "Zave", @intCast(child.id orelse 0));
 }
 
 /// Extract the port from "…127.0.0.1:<port>…".

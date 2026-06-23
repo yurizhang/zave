@@ -1,4 +1,4 @@
-# CLAUDE.md — window-finder
+# CLAUDE.md — Zave
 
 Project notes for AI assistants / contributors. Read this before changing the build,
 the windowing, or the networking — several non-obvious decisions are load-bearing.
@@ -69,9 +69,9 @@ thread/`io.concurrent` inside the windowed process; it hangs.
 
 ## Behavior / conventions
 
-- **Port:** default `9781`. Resolution order: `$PORT` env → `~/.window-finder-port`
+- **Port:** default `9781`. Resolution order: `$PORT` env → `~/.zave-port`
   (written by the in-app System settings) → `9781`. If busy, auto-tries `+1..+19`.
-- **In-app port change** (Settings ⚙ → System settings) persists to `~/.window-finder-port`
+- **In-app port change** (Settings ⚙ → System settings) persists to `~/.zave-port`
   then `POST /api/restart` re-execs the binary; the page polls the new port and redirects.
 - **UI language** defaults to Chinese (`fm-lang` in localStorage; toggle in the ⚙ menu).
   Theme persists in `fm-theme`. All UI strings live in the `I18N = {en, zh}` dict in
@@ -82,7 +82,7 @@ thread/`io.concurrent` inside the windowed process; it hangs.
   one another.
 - **Multiple windows:** `Cmd+N` / File → New Window opens more windows in the host process
   (all share the one server child). Native menu bar set up in `macwin.m` (`setupMenu`);
-  "About window-finder" calls the web UI's `showAbout()` via `evaluateJavaScript`.
+  "About Zave" calls the web UI's `showAbout()` via `evaluateJavaScript`.
 
 ## HTTP API (all under the local server)
 
@@ -108,8 +108,8 @@ Bump the version in **three** places, then tag + release with both artifacts:
 
 ```bash
 ./packaging/package.sh --zip --dmg
-git tag -a vX.Y.Z -m "window-finder vX.Y.Z" && git push origin vX.Y.Z
-gh release create vX.Y.Z dist/window-finder.zip dist/window-finder.dmg --title ... --notes ...
+git tag -a vX.Y.Z -m "Zave vX.Y.Z" && git push origin vX.Y.Z
+gh release create vX.Y.Z dist/zave.zip dist/zave.dmg --title ... --notes ...
 ```
 
 Commit messages end with:

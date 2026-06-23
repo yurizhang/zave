@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>File Manager</title>
+<title>Zave</title>
 <link rel="stylesheet" href="/assets/tabler-icons.min.css">
 <style>
 :root{
@@ -306,8 +306,8 @@ const I18N = {
     menuNotice:"通知", noticeNone:"暂无通知。", noticeOpen:"查看详情",
   },
 };
-const APP_VERSION = "1.8.0";
-const NOTICE_URL = "https://raw.githubusercontent.com/yurizhang/window-finder/main/notice.json";
+const APP_VERSION = "2.0.0";
+const NOTICE_URL = "https://raw.githubusercontent.com/yurizhang/zave/main/notice.json";
 let notice = null;            // latest fetched notice (with non-empty id)
 let lang = "zh";
 const t = (k) => I18N[lang][k];
@@ -978,13 +978,13 @@ function showAbout(){
   ov.innerHTML=`<div class="about">
     <i class="ti ti-x about-x" id="aboutCloseBtn" title="${t("aboutClose")}"></i>
     <div class="logo"><i class="ti ti-folder"></i></div>
-    <h2>window-finder</h2>
+    <h2>Zave</h2>
     <div class="ver">v${APP_VERSION}</div>
     <p>${t("aboutDesc")}</p>
     <div class="author"><i class="ti ti-user"></i>${t("aboutAuthor")} <a href="https://github.com/yurizhang" target="_blank" rel="noopener">Yong Zhang (@yurizhang)</a></div>
     <div class="author"><i class="ti ti-mail"></i><a href="mailto:zhangyong0604@126.com">zhangyong0604@126.com</a></div>
     <div class="links">
-      <a class="btn gh" href="https://github.com/yurizhang/window-finder" target="_blank" rel="noopener"><i class="ti ti-brand-github"></i>${t("aboutGithub")}</a>
+      <a class="btn gh" href="https://github.com/yurizhang/zave" target="_blank" rel="noopener"><i class="ti ti-brand-github"></i>${t("aboutGithub")}</a>
     </div>
     <div class="meta">${t("aboutBuilt")}</div>
   </div>`;

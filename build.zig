@@ -24,7 +24,7 @@ pub fn build(b: *std.Build) void {
     mod.linkFramework("WebKit", .{});
 
     const exe = b.addExecutable(.{
-        .name = "filemanager",
+        .name = "zave",
         .root_module = mod,
     });
 
@@ -34,6 +34,6 @@ pub fn build(b: *std.Build) void {
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| run_cmd.addArgs(args);
 
-    const run_step = b.step("run", "Run the file manager server");
+    const run_step = b.step("run", "Build and run Zave");
     run_step.dependOn(&run_cmd.step);
 }
