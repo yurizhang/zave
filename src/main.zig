@@ -104,9 +104,14 @@ fn runServer(io: Io, gpa: std.mem.Allocator) void {
     // The host parses this line to learn the chosen port.
     std.debug.print("File manager started → http://127.0.0.1:{d}\n", .{port});
 
+    // Handle each connection concurrently so multiple windows (multiple
+    // clients) don't block one another. Safe here: this process is headless
+    // (no Cocoa run loop to conflict with the Threaded I/O).
     while (true) {
         const stream = server.accept(io) catch continue;
-        handleConn(io, gpa, stream);
+        _ = io.concurrent(handleConn, .{ io, gpa, stream }) catch {
+            handleConn(io, gpa, stream); // fallback: handle inline
+        };
     }
 }
 

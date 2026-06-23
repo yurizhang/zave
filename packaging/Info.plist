@@ -11,9 +11,9 @@
     <key>CFBundleExecutable</key>
     <string>window-finder</string>
     <key>CFBundleVersion</key>
-    <string>1.7.1</string>
+    <string>1.8.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.7.1</string>
+    <string>1.8.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIconFile</key>
