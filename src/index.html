@@ -1018,8 +1018,7 @@ tabs=[{ current:"", hist:[], histIdx:-1, selName:null, entries:[], filterText:""
 active=0;
 applyStatic();
 load("");
-fetchNotice();
-setInterval(fetchNotice, 15*60*1000);  // re-check every 15 min
+fetchNotice();   // check for announcements once, at startup
 </script>
 </body>
 </html>

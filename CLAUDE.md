@@ -88,7 +88,7 @@ thread/`io.concurrent` inside the windowed process; it hangs.
 
 ## Notices (remote announcements)
 
-The app polls `notice.json` (GitHub raw, CORS `*`) on launch and every 15 min. A non-empty
+The app fetches `notice.json` (GitHub raw, CORS `*`) **once at startup** (no polling). A non-empty
 `id` shows a one-time toast + a red dot on the ⚙ menu. To broadcast: edit `notice.json`
 (`{id, level: info|warning|critical, title, message, url}`) with a NEW `id` and push; to
 stop, set `id` back to `""`. Seen/toasted state is per-machine localStorage
