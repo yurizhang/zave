@@ -115,9 +115,6 @@ git tag -a vX.Y.Z -m "Zave vX.Y.Z" && git push origin vX.Y.Z
 gh release create vX.Y.Z dist/zave.zip dist/zave.dmg --title ... --notes ...
 ```
 
-Commit messages end with:
-`Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`
-
 ## Not yet done
 
 Windows support (everything macOS-specific: `macwin.m`, the `open`/`zip`/`unzip`/Terminal
