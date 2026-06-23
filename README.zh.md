@@ -244,4 +244,4 @@ while (try it.next(io)) |entry| { ... }
 
 ## 📄 License
 
-[MIT](LICENSE) © 2026 Yong Zhang
+[MIT](LICENSE) &copy; 2026 Yong Zhang &lt;zhangyong0604@126.com&gt;
