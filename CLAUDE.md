@@ -77,8 +77,12 @@ thread/`io.concurrent` inside the windowed process; it hangs.
   Theme persists in `fm-theme`. All UI strings live in the `I18N = {en, zh}` dict in
   `index.html`; switching re-renders via `applyStatic()` + the JS-built parts.
 - **Frontend dialogs** use `prompt/confirm` (works because of the WKUIDelegate above).
-- **Single-user, localhost only** (binds `127.0.0.1`, no auth). The server is single
-  threaded and serves connections serially; fine for one webview client.
+- **Single-user, localhost only** (binds `127.0.0.1`, no auth). The server handles each
+  connection concurrently (`io.concurrent` in `runServer`) so multiple windows don't block
+  one another.
+- **Multiple windows:** `Cmd+N` / File → New Window opens more windows in the host process
+  (all share the one server child). Native menu bar set up in `macwin.m` (`setupMenu`);
+  "About window-finder" calls the web UI's `showAbout()` via `evaluateJavaScript`.
 
 ## HTTP API (all under the local server)
 
