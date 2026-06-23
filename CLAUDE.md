@@ -17,7 +17,9 @@ the Zig standard library + macOS system frameworks (Cocoa/WebKit).
   `@embedFile`. The Tabler icon font under `src/assets/` is embedded the same way.
 - `build.zig` — links `Cocoa` + `WebKit`, `link_libc = true`, option `-Dmacos-sdk=<path>`.
 - `packaging/` — `package.sh` (universal `.app` + `.zip`/`.dmg`), `Info.plist`,
-  `make_icon.py` (pure-Python icon generator), `icon.icns`.
+  `zave-icon.svg` (icon source) + `icon.icns`. Regenerate the icns:
+  `qlmanage -t -s 1024 -o . zave-icon.svg` → `sips` resize into an `.iconset` →
+  `iconutil -c icns`.
 - `notice.json` — remote announcement source (see Notices).
 
 ## Run / build / package

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#2c1656"></stop><stop offset="0.5" stop-color="#190f3a"></stop><stop offset="1" stop-color="#070b22"></stop>
+    </linearGradient>
+    <radialGradient id="gMag" cx="0.2" cy="0.18" r="0.6"><stop offset="0" stop-color="#ff34ad" stop-opacity="0.75"></stop><stop offset="0.55" stop-color="#ff34ad" stop-opacity="0.12"></stop><stop offset="1" stop-color="#ff34ad" stop-opacity="0"></stop></radialGradient>
+    <radialGradient id="gCyan" cx="0.82" cy="0.84" r="0.6"><stop offset="0" stop-color="#2fe7ff" stop-opacity="0.7"></stop><stop offset="0.55" stop-color="#2fe7ff" stop-opacity="0.12"></stop><stop offset="1" stop-color="#2fe7ff" stop-opacity="0"></stop></radialGradient>
+    <radialGradient id="gViolet" cx="0.5" cy="0.58" r="0.55"><stop offset="0" stop-color="#8b46ff" stop-opacity="0.55"></stop><stop offset="0.6" stop-color="#8b46ff" stop-opacity="0.1"></stop><stop offset="1" stop-color="#8b46ff" stop-opacity="0"></stop></radialGradient>
+    <linearGradient id="glass" x1="0.15" y1="0" x2="0.6" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.40"></stop><stop offset="0.45" stop-color="#ffffff" stop-opacity="0.16"></stop><stop offset="1" stop-color="#ffffff" stop-opacity="0.07"></stop></linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="1"></stop><stop offset="0.3" stop-color="#ffffff" stop-opacity="0.35"></stop><stop offset="0.62" stop-color="#ffffff" stop-opacity="0.06"></stop><stop offset="1" stop-color="#ffffff" stop-opacity="0.22"></stop></linearGradient>
+    <linearGradient id="side" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2c7d"></stop><stop offset="1" stop-color="#130b2c"></stop></linearGradient>
+    <radialGradient id="sheen" cx="0.5" cy="0.0" r="0.75"><stop offset="0" stop-color="#ffffff" stop-opacity="0.34"></stop><stop offset="0.45" stop-color="#ffffff" stop-opacity="0.05"></stop><stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop></radialGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#05030f" stop-opacity="0.55"></stop><stop offset="0.65" stop-color="#05030f" stop-opacity="0.22"></stop><stop offset="1" stop-color="#05030f" stop-opacity="0"></stop></radialGradient>
+    <radialGradient id="tMag" cx="0.34" cy="0.32" r="0.62"><stop offset="0" stop-color="#ff45b6" stop-opacity="0.85"></stop><stop offset="0.6" stop-color="#ff45b6" stop-opacity="0.12"></stop><stop offset="1" stop-color="#ff45b6" stop-opacity="0"></stop></radialGradient>
+    <radialGradient id="tVio" cx="0.66" cy="0.32" r="0.62"><stop offset="0" stop-color="#a05cff" stop-opacity="0.8"></stop><stop offset="0.6" stop-color="#a05cff" stop-opacity="0.12"></stop><stop offset="1" stop-color="#a05cff" stop-opacity="0"></stop></radialGradient>
+    <radialGradient id="tBlu" cx="0.34" cy="0.68" r="0.62"><stop offset="0" stop-color="#6f7cff" stop-opacity="0.8"></stop><stop offset="0.6" stop-color="#6f7cff" stop-opacity="0.12"></stop><stop offset="1" stop-color="#6f7cff" stop-opacity="0"></stop></radialGradient>
+    <radialGradient id="tCya" cx="0.66" cy="0.68" r="0.62"><stop offset="0" stop-color="#3fe8ff" stop-opacity="0.9"></stop><stop offset="0.6" stop-color="#3fe8ff" stop-opacity="0.14"></stop><stop offset="1" stop-color="#3fe8ff" stop-opacity="0"></stop></radialGradient>
+    <path id="sq" d="M 512.0 256.0 L 511.4 362.6 L 509.4 396.3 L 506.2 420.4 L 501.5 439.3 L 495.5 454.9 L 488.0 467.9 L 478.9 478.9 L 467.9 488.0 L 454.9 495.5 L 439.3 501.5 L 420.4 506.2 L 396.3 509.4 L 362.6 511.4 L 256.0 512.0 L 149.4 511.4 L 115.7 509.4 L 91.6 506.2 L 72.7 501.5 L 57.1 495.5 L 44.1 488.0 L 33.1 478.9 L 24.0 467.9 L 16.5 454.9 L 10.5 439.3 L 5.8 420.4 L 2.6 396.3 L 0.6 362.6 L 0.0 256.0 L 0.6 149.4 L 2.6 115.7 L 5.8 91.6 L 10.5 72.7 L 16.5 57.1 L 24.0 44.1 L 33.1 33.1 L 44.1 24.0 L 57.1 16.5 L 72.7 10.5 L 91.6 5.8 L 115.7 2.6 L 149.4 0.6 L 256.0 0.0 L 362.6 0.6 L 396.3 2.6 L 420.4 5.8 L 439.3 10.5 L 454.9 16.5 L 467.9 24.0 L 478.9 33.1 L 488.0 44.1 L 495.5 57.1 L 501.5 72.7 L 506.2 91.6 L 509.4 115.7 L 511.4 149.4 L 512.0 256.0 Z"></path>
+  </defs>
+
+  <use href="#sq" fill="url(#bg)"></use>
+  <use href="#sq" fill="url(#gMag)"></use>
+  <use href="#sq" fill="url(#gCyan)"></use>
+  <use href="#sq" fill="url(#gViolet)"></use>
+
+  <ellipse cx="195" cy="272" rx="70" ry="22" fill="url(#shadow)"></ellipse>
+  <ellipse cx="317" cy="272" rx="70" ry="22" fill="url(#shadow)"></ellipse>
+  <ellipse cx="195" cy="394" rx="70" ry="22" fill="url(#shadow)"></ellipse>
+  <ellipse cx="317" cy="394" rx="70" ry="22" fill="url(#shadow)"></ellipse>
+
+  <rect x="142" y="150" width="106" height="108" rx="24" fill="url(#side)"></rect>
+  <rect x="142" y="142" width="106" height="106" rx="24" fill="url(#tMag)"></rect>
+  <rect x="142" y="142" width="106" height="106" rx="24" fill="url(#glass)"></rect>
+  <rect x="142.9" y="142.9" width="104.2" height="104.2" rx="23.1" fill="none" stroke="url(#edge)" stroke-width="1.7"></rect>
+  <rect x="154" y="153" width="60" height="5" rx="2.5" fill="#ffffff" opacity="0.55"></rect>
+
+  <rect x="264" y="150" width="106" height="108" rx="24" fill="url(#side)"></rect>
+  <rect x="264" y="142" width="106" height="106" rx="24" fill="url(#tVio)"></rect>
+  <rect x="264" y="142" width="106" height="106" rx="24" fill="url(#glass)"></rect>
+  <rect x="264.9" y="142.9" width="104.2" height="104.2" rx="23.1" fill="none" stroke="url(#edge)" stroke-width="1.7"></rect>
+  <rect x="276" y="153" width="60" height="5" rx="2.5" fill="#ffffff" opacity="0.5"></rect>
+
+  <rect x="142" y="272" width="106" height="108" rx="24" fill="url(#side)"></rect>
+  <rect x="142" y="264" width="106" height="106" rx="24" fill="url(#tBlu)"></rect>
+  <rect x="142" y="264" width="106" height="106" rx="24" fill="url(#glass)"></rect>
+  <rect x="142.9" y="264.9" width="104.2" height="104.2" rx="23.1" fill="none" stroke="url(#edge)" stroke-width="1.7"></rect>
+  <rect x="154" y="275" width="60" height="5" rx="2.5" fill="#ffffff" opacity="0.5"></rect>
+
+  <rect x="264" y="272" width="106" height="108" rx="24" fill="url(#side)"></rect>
+  <rect x="264" y="264" width="106" height="106" rx="24" fill="url(#tCya)"></rect>
+  <rect x="264" y="264" width="106" height="106" rx="24" fill="url(#glass)"></rect>
+  <rect x="264.9" y="264.9" width="104.2" height="104.2" rx="23.1" fill="none" stroke="url(#edge)" stroke-width="1.7"></rect>
+  <rect x="276" y="275" width="60" height="5" rx="2.5" fill="#ffffff" opacity="0.6"></rect>
+
+  <use href="#sq" fill="url(#sheen)"></use>
+  <use href="#sq" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2.5"></use>
+</svg>
