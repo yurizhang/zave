@@ -12,7 +12,7 @@ static int g_child_pid = 0;
 static NSString *g_url = nil;
 static NSString *g_title = nil;
 
-@interface WFDelegate : NSObject <NSApplicationDelegate, WKUIDelegate>
+@interface WFDelegate : NSObject <NSApplicationDelegate, WKUIDelegate, NSWindowDelegate>
 - (void)newWindow:(id)sender;
 @end
 
@@ -28,6 +28,7 @@ static void makeWindow(void) {
                                                      backing:NSBackingStoreBuffered
                                                        defer:NO];
     [window setReleasedWhenClosed:NO]; // we manage lifetime; avoid double-release on quit
+    [window setDelegate:g_delegate];   // for windowShouldClose: (close → minimize)
     [window setTitle:g_title];
     [window setMinSize:NSMakeSize(720, 480)];
     // Remember window size/position across launches; center on first ever run.
@@ -88,6 +89,12 @@ static void setupMenu(void) {
 }
 - (void)newWindow:(id)sender {
     makeWindow();
+}
+// Close button (and Cmd+W) minimizes the window instead of closing it, so the
+// app keeps running. Quit with Cmd+Q.
+- (BOOL)windowShouldClose:(NSWindow *)sender {
+    [sender miniaturize:nil];
+    return NO;
 }
 // Run JS in the front window's web view (used by the native menu items).
 - (void)evalJS:(NSString *)js {
